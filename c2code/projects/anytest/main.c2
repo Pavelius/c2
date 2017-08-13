@@ -1,0 +1,9 @@
+import core.lib as this;
+import ui.message;
+
+int main()
+{
+	int a = message.MB_YESNO;
+	message.text("Any tst auto.","Caption text");
+	exit(0);
+}

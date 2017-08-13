@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\segment.cpp" />
+    <ClCompile Include="source\files.cpp" />
+    <ClCompile Include="source\type.cpp" />
+    <ClCompile Include="source\typeref.cpp" />
+    <ClCompile Include="source\type_compile.cpp" />
+    <ClCompile Include="source\evalue.cpp" />
+    <ClCompile Include="source\genstate.cpp" />
+    <ClCompile Include="source\messages.cpp" />
+    <ClCompile Include="source\crt.cpp" />
+    <ClCompile Include="source\crt_memory.cpp" />
+    <ClCompile Include="source\io.cpp" />
+    <ClCompile Include="source\dasm.cpp" />
+    <ClCompile Include="source\command.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\segment.h" />
+    <ClInclude Include="source\files.h" />
+    <ClInclude Include="source\type.h" />
+    <ClInclude Include="source\typeref.h" />
+    <ClInclude Include="source\evalue.h" />
+    <ClInclude Include="source\genstate.h" />
+    <ClInclude Include="source\adat.h" />
+    <ClInclude Include="source\crt.h" />
+    <ClInclude Include="source\io.h" />
+    <ClInclude Include="source\dasm.h" />
+    <ClInclude Include="source\aref.h" />
+    <ClInclude Include="source\autogrow.h" />
+    <ClInclude Include="source\command.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Code">
+      <UniqueIdentifier>{5d356290-f2a5-4b91-9de6-ad8d85e28b79}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="c2code\library\core\crt.c2">
+      <Filter>Code</Filter>
+    </None>
+    <None Include="c2code\library\core\lib.c2">
+      <Filter>Code</Filter>
+    </None>
+    <None Include="c2code\library\core\string.c2">
+      <Filter>Code</Filter>
+    </None>
+  </ItemGroup>
+</Project>
