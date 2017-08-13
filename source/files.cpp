@@ -4,6 +4,7 @@
 
 using namespace c2;
 
+// c2 - code module (class or static module)
 static const char*	valid_extensions[] = {"c2"};
 const char*			urls::library;
 const char*			urls::project;
