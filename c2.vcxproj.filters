@@ -56,7 +56,13 @@
       <Filter>Startup</Filter>
     </ClCompile>
     <ClCompile Include="source\backend_asm.cpp">
-      <Filter>Compiler</Filter>
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="source\backend.cpp">
+      <Filter>Backend</Filter>
+    </ClCompile>
+    <ClCompile Include="source\type_linker.cpp">
+      <Filter>Linker</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -106,7 +112,7 @@
       <Filter>Startup</Filter>
     </ClInclude>
     <ClInclude Include="source\backend.h">
-      <Filter>Compiler</Filter>
+      <Filter>Backend</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +130,12 @@
     </Filter>
     <Filter Include="Startup">
       <UniqueIdentifier>{eb08dcbc-9a48-4bec-8852-540dff43bfb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Backend">
+      <UniqueIdentifier>{3bf63b35-b8ef-413b-b3d1-af3c142bb123}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Linker">
+      <UniqueIdentifier>{300509c4-c21b-4f0e-af83-5a6b7b549d8b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

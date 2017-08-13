@@ -76,6 +76,7 @@ namespace c2
 		void			parse(bool quick_header = false);
 		type*			reference();
 		void			set(typeflags value) { flags |= 1 << value; }
+		static bool		setbackend(const char* progid);
 		void			setconstant(int value);
 		void			setmethod() { size = 0; }
 	};

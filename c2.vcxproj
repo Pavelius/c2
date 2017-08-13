@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\backend.cpp" />
     <ClCompile Include="source\backend_asm.cpp" />
     <ClCompile Include="source\collection.cpp" />
     <ClCompile Include="source\crt.cpp" />
@@ -36,6 +37,7 @@
     <ClCompile Include="source\type.cpp" />
     <ClCompile Include="source\typeref.cpp" />
     <ClCompile Include="source\type_compile.cpp" />
+    <ClCompile Include="source\type_linker.cpp" />
     <ClCompile Include="source\win_console.cpp" />
     <ClCompile Include="source\win_io_file.cpp" />
   </ItemGroup>

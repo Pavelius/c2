@@ -1,6 +1,7 @@
 #include "adat.h"
 #include "crt.h"
 #include "genstate.h"
+#include "backend.h"
 #include "evalue.h"
 #include "files.h"
 #include "segment.h"
@@ -19,6 +20,7 @@ struct parsestate
 
 static parsestate		ps;
 static adat<type*>		locals;
+static backend*			compiler_backend;
 static int				errors;
 static void				statement(int* ct, int* br, int* cs, int* ds, evalue* cse = 0);
 static void				logical_or(evalue& e1);
@@ -86,6 +88,24 @@ static int label()
 
 static void calling(type* sym, evalue* parameters, int count)
 {
+}
+
+static void prologue(type* sym)
+{
+	if(!gen.code)
+		return;
+	if(!ps.module || !sym || !compiler_backend)
+		return;
+	compiler_backend->prologue(ps.module, sym);
+}
+
+static void epilogue(type* sym)
+{
+	if(!gen.code)
+		return;
+	if(!ps.module || !sym || !compiler_backend)
+		return;
+	compiler_backend->epilogue(ps.module, sym);
 }
 
 static void unary_operation(evalue& e2, char t1)
@@ -552,9 +572,9 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 				}
 				skip(',');
 			}
-			//gen::body(m2);
+			prologue(m2);
 			statement(0, 0, 0, 0);
-			//gen::end(m2);
+			epilogue(m2);
 			//gen::result(m2);
 			return true;
 		}
@@ -1482,11 +1502,21 @@ void type::parse(bool quick_header)
 		status(ErrorUnexpectedSymbols);
 }
 
+bool type::setbackend(const char* progid)
+{
+	compiler_backend = backend::find(progid);
+	return compiler_backend != 0;
+}
+
 type* type::compile(const char* id)
 {
 	auto p = findtype(id);
 	if(!p)
 		p = create(id);
+	genstate push;
+	gen.code = false;
+	p->parse(true);
+	gen.code = true;
 	p->parse(false);
 	return p;
 }

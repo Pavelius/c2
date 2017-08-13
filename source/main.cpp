@@ -45,6 +45,8 @@ int main(int argc, char *argv[])
 	c2::urls::library = "library";
 	c2::urls::platform = "C:/windows/system32";
 	c2::type::cleanup();
+	if(!c2::type::setbackend("asm"))
+		return 0;
 	c2::type::compile(szdup("main"));
 	return 0;
 }
