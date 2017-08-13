@@ -39,11 +39,13 @@ namespace c2
 		unsigned		size; // size of type/requisit (total lenght is multiplied by count), 0 for method
 		int				count; // 0 for type, 1+ for requisit, parameters count for method
 		int				value;
+		type*			parent; // types, plaform types, reference
 		type*			result; // result of requisit or type pointer
 		type*			child; // child requisits, list of params
 		type*			next; // next element in chain
 		typeref*		refs; // pseudonime and types
 		unsigned		flags;
+		const char*		content;
 		operator bool() const { return id != 0; }
 		//
 		static type		i8[1];
@@ -69,10 +71,11 @@ namespace c2
 		unsigned		getparametercount() const { return ismethod() ? count : 0; }
 		bool			is(typeflags value) const { return (flags&(1 << value)) != 0; }
 		bool			isconstant() const { return count == -1 && size == 0; }
-		bool			ispointer() const { return istype() && result; }
-		bool			istype() const { return count == 0; }
-		bool			ismember() const { return this && count > 0; }
-		bool			ismethod() const { return this && ismember() && size == 0; }
+		bool			isforward() const { return ismethod() && !content; }
+		bool			ispointer() const;
+		bool			istype() const;
+		bool			ismember() const;
+		bool			ismethod() const { return ismember() && size == 0; }
 		bool			isplatform() const;
 		static void		link(const char* id);
 		void			parse();

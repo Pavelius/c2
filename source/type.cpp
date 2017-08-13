@@ -36,6 +36,21 @@ void type::clear()
 	memset(this, 0, sizeof(type));
 }
 
+bool type::istype() const
+{
+	return this && (parent == types || parent == types_platform || parent == types_ref);
+}
+
+bool type::ismember() const
+{
+	return this && !(parent == types || parent == types_platform || parent == types_ref);
+}
+
+bool type::ispointer() const
+{
+	return this && (parent == types_ref);
+}
+
 type* type::findtype(const char* id)
 {
 	// Стандартные типы
@@ -167,6 +182,7 @@ type* type::create(const char* id)
 			types_platform = p;
 		else
 			seqlast(types_platform)->next = p;
+		p->parent = types_platform;
 	}
 	else
 	{
@@ -174,6 +190,7 @@ type* type::create(const char* id)
 			types = p;
 		else
 			seqlast(types)->next = p;
+		p->parent = types;
 	}
 	return p;
 }
@@ -191,6 +208,7 @@ type* type::create(const char* id, type* result, unsigned flags)
 	p->id = id;
 	p->result = result;
 	p->count = 1;
+	p->parent = this;
 	p->size = result->size;
 	if(result->ispointer())
 		p->size = pointer_size;
@@ -213,6 +231,7 @@ type* type::reference()
 	}
 	auto p = create(id);
 	p->result = this;
+	p->parent = types_ref;
 	if(!types_ref)
 		types_ref = p;
 	else
@@ -224,17 +243,8 @@ bool type::isplatform() const
 {
 	if(istype())
 		return isplatformid(id);
-	else if(ismethod())
-	{
-		for(auto p = types_platform; p; p = p->next)
-		{
-			for(auto m = p; m; m = m->child)
-			{
-				if(m == this)
-					return true;
-			}
-		}
-	}
+	if(ismethod())
+		return parent == types_platform;
 	return false;
 }
 
@@ -256,6 +266,7 @@ static void basetype(type* p, const char* name, unsigned size)
 {
 	p->id = szdup(name);
 	p->size = size;
+	p->parent = types;
 }
 
 static void initialize_types()

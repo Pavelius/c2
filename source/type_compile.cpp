@@ -539,6 +539,8 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 			// Test unique members
 			for(auto pm = parent->child; pm; pm = pm->next)
 			{
+				if(pm->isforward())
+					continue;
 				if(pm->id == id)
 				{
 					status(Error1p2pAlreadyDefined, "identifier", id);
@@ -582,6 +584,7 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 			}
 			else
 			{
+				m2->content = ps.p;
 				prologue(m2);
 				statement(0, 0, 0, 0);
 				epilogue(m2);
