@@ -152,4 +152,9 @@
       <Filter>Code</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="c2code\output\anytest.txt">
+      <Filter>Code</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

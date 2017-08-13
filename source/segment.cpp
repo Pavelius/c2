@@ -35,6 +35,11 @@ struct data_segment : segment, public aref<unsigned char>
 		reserve(count);
 	}
 
+	unsigned char* getdata() override
+	{
+		return data;
+	}
+
 };
 
 struct bbs_segment : segment
@@ -56,6 +61,11 @@ struct bbs_segment : segment
 	unsigned get() override
 	{
 		return count;
+	}
+
+	unsigned char* getdata() override
+	{
+		return 0;
 	}
 
 	void set(unsigned count) override

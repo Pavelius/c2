@@ -65,6 +65,9 @@
     <None Include="c2code\library\core\string.c2" />
     <None Include="c2code\projects\anytest\main.c2" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="c2code\output\anytest.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E7DF717A-4B08-4798-A9FA-B75C49023402}</ProjectGuid>
     <RootNamespace>c2</RootNamespace>

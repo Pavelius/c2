@@ -42,11 +42,13 @@ int main(int argc, char *argv[])
 	c2::errorproc = error;
 	c2::statusproc = status;
 	c2::urls::project = "projects/anytest";
+	c2::urls::output = "output";
 	c2::urls::library = "library";
 	c2::urls::platform = "C:/windows/system32";
 	c2::type::cleanup();
 	if(!c2::type::setbackend("asm"))
 		return 0;
 	c2::type::compile(szdup("main"));
+	c2::type::link(szdup("anytest"));
 	return 0;
 }

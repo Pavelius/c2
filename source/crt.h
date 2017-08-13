@@ -50,7 +50,6 @@ template<class T> const char*		getstr(T e); // Template to return string of smal
 const char*							getstrfdat(char* result, unsigned d, bool show_time = true);
 int									getyear(unsigned d); // Get year from date
 bool								ischa(unsigned u); // is alphabetical character?
-bool								issignature(const char name[4], const char* s); // Is name equal to string s?
 inline bool							isnum(unsigned u) { return u>='0' && u<='9'; } // is numeric character?
 void*								loadb(const char* url, int* size = 0, int additional_bytes_alloated = 0); // Load binary file.
 char*								loadt(const char* url, int* size = 0); // Load text file and decode it to system codepage.

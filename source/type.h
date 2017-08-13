@@ -73,6 +73,7 @@ namespace c2
 		bool			ismember() const { return this && count > 0; }
 		bool			ismethod() const { return this && ismember() && size == 0; }
 		bool			isplatform() const;
+		static void		link(const char* id);
 		void			parse(bool quick_header = false);
 		type*			reference();
 		void			set(typeflags value) { flags |= 1 << value; }

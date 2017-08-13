@@ -8,6 +8,7 @@ static const char*	valid_extensions[] = {"c2"};
 const char*			urls::library;
 const char*			urls::project;
 const char*			urls::platform;
+const char*			urls::output;
 
 struct filecash
 {
