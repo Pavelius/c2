@@ -19,11 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\cface\cface.vcxproj">
-      <Project>{0a1c9ad6-05d3-49ab-85c2-466017cee49a}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
+    <ClCompile Include="source\collection.cpp" />
     <ClCompile Include="source\command.cpp" />
     <ClCompile Include="source\crt.cpp" />
     <ClCompile Include="source\crt_memory.cpp" />
@@ -35,14 +31,19 @@
     <ClCompile Include="source\messages.cpp" />
     <ClCompile Include="source\segment.cpp" />
     <ClCompile Include="source\files.cpp" />
+    <ClCompile Include="source\stringcreator.cpp" />
+    <ClCompile Include="source\szdup.cpp" />
     <ClCompile Include="source\type.cpp" />
     <ClCompile Include="source\typeref.cpp" />
     <ClCompile Include="source\type_compile.cpp" />
+    <ClCompile Include="source\win_console.cpp" />
+    <ClCompile Include="source\win_io_file.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\adat.h" />
     <ClInclude Include="source\aref.h" />
     <ClInclude Include="source\autogrow.h" />
+    <ClInclude Include="source\collection.h" />
     <ClInclude Include="source\command.h" />
     <ClInclude Include="source\crt.h" />
     <ClInclude Include="source\dasm.h" />
@@ -51,8 +52,10 @@
     <ClInclude Include="source\genstate.h" />
     <ClInclude Include="source\io.h" />
     <ClInclude Include="source\segment.h" />
+    <ClInclude Include="source\stringcreator.h" />
     <ClInclude Include="source\type.h" />
     <ClInclude Include="source\typeref.h" />
+    <ClInclude Include="source\win.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="c2code\library\core\crt.c2" />

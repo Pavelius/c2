@@ -15,6 +15,11 @@
     <ClCompile Include="source\io.cpp" />
     <ClCompile Include="source\dasm.cpp" />
     <ClCompile Include="source\command.cpp" />
+    <ClCompile Include="source\collection.cpp" />
+    <ClCompile Include="source\win_io_file.cpp" />
+    <ClCompile Include="source\win_console.cpp" />
+    <ClCompile Include="source\stringcreator.cpp" />
+    <ClCompile Include="source\szdup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\segment.h" />
@@ -30,6 +35,9 @@
     <ClInclude Include="source\aref.h" />
     <ClInclude Include="source\autogrow.h" />
     <ClInclude Include="source\command.h" />
+    <ClInclude Include="source\collection.h" />
+    <ClInclude Include="source\win.h" />
+    <ClInclude Include="source\stringcreator.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Code">
