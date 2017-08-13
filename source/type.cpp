@@ -1,5 +1,4 @@
 #include "autogrow.h"
-#include "command.h"
 #include "type.h"
 #include "typeref.h"
 
@@ -270,10 +269,13 @@ static void initialize_types()
 	basetype(type::v0, "void", 0);
 }
 
-extern void files_cleanup();
+void files_cleanup();
+void segments_cleanup();
+
 void type::cleanup()
 {
 	files_cleanup();
+	segments_cleanup();
 	globals.clear(); memset(globals.data, 0, sizeof(globals.data));
 	typeref::cleanup();
 	initialize_types();

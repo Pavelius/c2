@@ -3,28 +3,80 @@
 
 using namespace c2;
 
-segment		c2::seccode;
-segment		c2::secdata;
-segment		c2::secstr;
-unsigned	c2::secbbs;
+segment* c2::segments[DataUninitialized + 1];
 
-segment::segment() : rvabase(0), index(0)
+struct data_segment : segment, public aref<unsigned char>
 {
-	data = 0;
-	count = 0;
-}
+	
+	unsigned rvabase;
 
-void segment::add(unsigned char a)
-{
-	if(!gen.code)
-		return;
-	reserve();
-	data[count++] = a;
-}
+	data_segment()
+	{
+		initialize();
+	}
 
-unsigned char* segment::alloc(unsigned count)
+	void add(unsigned char a) override
+	{
+		if(!gen.code)
+			return;
+		reserve(count + 1);
+		data[count++] = a;
+	}
+
+	unsigned get() override
+	{
+		return count;
+	}
+
+	void set(unsigned count) override
+	{
+		if(!count && this->count == 0)
+			return;
+		reserve(count);
+	}
+
+};
+
+struct bbs_segment : segment
 {
-	auto m = this->count;
-	reserve(m + count);
-	return data + m;
+
+	unsigned count;
+
+	bbs_segment() : count(0)
+	{
+	}
+
+	void add(unsigned char a) override
+	{
+		if(!gen.code)
+			return;
+		count++;
+	}
+
+	unsigned get() override
+	{
+		return count;
+	}
+
+	void set(unsigned count) override
+	{
+		this->count = count;
+	}
+
+};
+
+static data_segment data_initialized;
+static data_segment data_string;
+static data_segment code;
+static bbs_segment data_uninitialized;
+
+void segments_cleanup()
+{
+	segments[Code] = &code;
+	segments[Data] = &data_initialized;
+	segments[DataUninitialized] = &data_initialized;
+	segments[DataStrings] = &data_string;
+	// Clear all sections
+	for(auto p : segments)
+		p->set(0);
 }

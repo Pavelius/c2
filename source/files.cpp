@@ -1,5 +1,4 @@
 #include "autogrow.h"
-#include "command.h"
 #include "io.h"
 #include "files.h"
 

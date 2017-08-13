@@ -1,4 +1,3 @@
-#include "segment.h"
 #include "typeref.h"
 
 #pragma once

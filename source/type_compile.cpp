@@ -3,6 +3,7 @@
 #include "genstate.h"
 #include "evalue.h"
 #include "files.h"
+#include "segment.h"
 
 using namespace c2;
 
@@ -80,7 +81,7 @@ static void label(int i)
 static int label()
 {
 	// Создает метку в текущем месте
-	return seccode.count;
+	return segments[Code]->get();
 }
 
 static void calling(type* sym, evalue* parameters, int count)
@@ -693,9 +694,9 @@ static int next_string()
 			}
 			break;
 		}
-		secstr.add((unsigned char)next_string_symbol());
+		segments[DataStrings]->add((unsigned char)next_string_symbol());
 	}
-	secstr.add(0);
+	segments[DataStrings]->add(0);
 	return result;
 }
 

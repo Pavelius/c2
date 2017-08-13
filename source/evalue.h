@@ -8,9 +8,6 @@ namespace c2
 		Eax, Ebx, Ecx, Edx, Esi, Edi, Esp, Ebp,
 		Const,
 	};
-	enum sectiontypes {
-		Executable, Literal
-	};
 	struct evalue
 	{
 		type*			result;

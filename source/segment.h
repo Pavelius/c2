@@ -4,17 +4,16 @@
 
 namespace c2
 {
-	struct segment : public aref<unsigned char>
-	{
-		unsigned		rvabase;
-		int				index;
-		segment();
-		void			add(unsigned char a);
-		unsigned char*	alloc(unsigned count);
-		int				rel(const void* p) const { return (char*)p - (char*)data; }
+	enum sectiontypes {
+		Code, Data, DataStrings, DataUninitialized,
 	};
-	extern unsigned		secbbs;
-	extern segment		secdata;
-	extern segment		seccode;
-	extern segment		secstr;
+	struct segment
+	{
+		unsigned			rvabase;
+		segment() : rvabase(0) {}
+		virtual void		add(unsigned char a) = 0;
+		virtual unsigned	get() = 0;
+		virtual void		set(unsigned count) = 0;
+	};
+	extern segment*			segments[DataUninitialized + 1];
 }

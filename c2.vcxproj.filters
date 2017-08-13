@@ -4,9 +4,6 @@
     <ClCompile Include="source\collection.cpp">
       <Filter>Support</Filter>
     </ClCompile>
-    <ClCompile Include="source\command.cpp">
-      <Filter>Support</Filter>
-    </ClCompile>
     <ClCompile Include="source\crt.cpp">
       <Filter>Support</Filter>
     </ClCompile>
@@ -58,6 +55,9 @@
     <ClCompile Include="source\main.cpp">
       <Filter>Startup</Filter>
     </ClCompile>
+    <ClCompile Include="source\backend_asm.cpp">
+      <Filter>Compiler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\adat.h">
@@ -70,9 +70,6 @@
       <Filter>Support</Filter>
     </ClInclude>
     <ClInclude Include="source\collection.h">
-      <Filter>Support</Filter>
-    </ClInclude>
-    <ClInclude Include="source\command.h">
       <Filter>Support</Filter>
     </ClInclude>
     <ClInclude Include="source\crt.h">
@@ -107,6 +104,9 @@
     </ClInclude>
     <ClInclude Include="source\files.h">
       <Filter>Startup</Filter>
+    </ClInclude>
+    <ClInclude Include="source\backend.h">
+      <Filter>Compiler</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

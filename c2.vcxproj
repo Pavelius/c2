@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\backend_asm.cpp" />
     <ClCompile Include="source\collection.cpp" />
-    <ClCompile Include="source\command.cpp" />
     <ClCompile Include="source\crt.cpp" />
     <ClCompile Include="source\crt_memory.cpp" />
     <ClCompile Include="source\dasm.cpp" />
@@ -43,8 +43,8 @@
     <ClInclude Include="source\adat.h" />
     <ClInclude Include="source\aref.h" />
     <ClInclude Include="source\autogrow.h" />
+    <ClInclude Include="source\backend.h" />
     <ClInclude Include="source\collection.h" />
-    <ClInclude Include="source\command.h" />
     <ClInclude Include="source\crt.h" />
     <ClInclude Include="source\dasm.h" />
     <ClInclude Include="source\evalue.h" />
