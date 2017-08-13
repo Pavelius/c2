@@ -82,9 +82,9 @@ struct backend_asm : public backend
 		linefeed();
 	}
 
-	void operation(evalue& e1, evalue& e2, char* t1, char* t2) override
+	void operation(evalue& e1, evalue& e2, char t1, char t2) override
 	{
-		switch(*t1)
+		switch(t1)
 		{
 		case '=':
 			op("mov", e1, e2);
@@ -98,9 +98,9 @@ struct backend_asm : public backend
 		}
 	}
 
-	void operation(evalue& e1, char* t1)
+	void operation(evalue& e1, char t1)
 	{
-		switch(*t1)
+		switch(t1)
 		{
 		case '!':
 			op("neg", e1);

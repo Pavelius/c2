@@ -274,6 +274,7 @@ void segments_cleanup();
 
 void type::cleanup()
 {
+	id_this = szdup("this");
 	files_cleanup();
 	segments_cleanup();
 	globals.clear(); memset(globals.data, 0, sizeof(globals.data));

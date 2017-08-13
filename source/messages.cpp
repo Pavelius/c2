@@ -29,6 +29,9 @@ template<> const char* getstr<messages>(messages value)
 	case ErrorVoidReturnValue: return "void procedure return value";
 	case ErrorInvalid1p2pIn3p: return "invalid %1 '%2' in %3";
 	case ErrorWrongParamNumber: return "wrong parameters number in call to %1. You want %3i but function has %2i.";
+	case ErrorNotImplement1p2p: return "not implement %1 '%2'";
+	case ErrorNotFound1p2p: return "not found %1 '%2'";
+	case Error1p2pAlreadyDefined: return "%1 '%2' already defined";
 	default: return "unknown error";
 	}
 }

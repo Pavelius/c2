@@ -14,6 +14,7 @@ namespace c2
 		ErrorNeedSymbol, ErrorNeedConstantExpression, ErrorNeedIndentifier, ErrorNeedFunctionMember, ErrorNeedPointerOrArray, ErrorNeedLValue,
 		ErrorLongNotUseWithThisType, ErrorShortNotUseWithThisType, ErrorUnsignedNotUseWithThisType,
 		Error1pDontUse2pTimes,
+		Error1p2pAlreadyDefined,
 		ErrorArrayOverflow, ErrorImportAlreadyHavePseudonim, ErrorModuleAlreadyImported,
 		ErrorUnknownInstance, ErrorVoidReturnValue,
 		ErrorKeyword1pUsedWithout2p,
@@ -21,6 +22,7 @@ namespace c2
 		ErrorSectionNumber,
 		ErrorWrongParamNumber,
 		ErrorNotImplement1p2p,
+		ErrorNotFound1p2p,
 		ErrorCastType1pTo2p,
 		ErrorOptions, ErrorCompilator, ErrorLinker,
 		FirstError = ErrorUnexpectedSymbols, LastError = ErrorCastType1pTo2p,
@@ -29,7 +31,7 @@ namespace c2
 		FirstStatus = StatusStartParse, LastStatus = StatusDeclare,
 	};
 	enum typeflags : char {
-		Private, Static, Forward, Readed, Writed,
+		Private, Static, Forward, Readed, Writed, NoInitialized,
 	};
 	struct type
 	{
@@ -64,7 +66,6 @@ namespace c2
 		type*			findmembers(const char* id);
 		type*			findmembertype(const char* id, int modifier_unsigned = 0);
 		static type*	findtype(const char* id);
-		unsigned		getlenght() const { return size*count; }
 		unsigned		getparametercount() const { return ismethod() ? count : 0; }
 		bool			is(typeflags value) const { return (flags&(1 << value)) != 0; }
 		bool			isconstant() const { return count == -1 && size == 0; }
@@ -74,7 +75,7 @@ namespace c2
 		bool			ismethod() const { return this && ismember() && size == 0; }
 		bool			isplatform() const;
 		static void		link(const char* id);
-		void			parse(bool quick_header = false);
+		void			parse();
 		type*			reference();
 		void			set(typeflags value) { flags |= 1 << value; }
 		static bool		setbackend(const char* progid);

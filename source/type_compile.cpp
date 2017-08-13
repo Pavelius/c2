@@ -18,12 +18,12 @@ struct parsestate
 	~parsestate();
 };
 
-static parsestate		ps;
-static adat<type*>		locals;
-static backend*			compiler_backend;
-static int				errors;
-static void				statement(int* ct, int* br, int* cs, int* ds, evalue* cse = 0);
-static void				logical_or(evalue& e1);
+static parsestate			ps;
+static adat<type*>			locals;
+static backend*				compiler_backend;
+static int					errors;
+static void					statement(int* ct, int* br, int* cs, int* ds, evalue* cse = 0);
+static void					logical_or(evalue& e1);
 void(*c2::errorproc)(messages m, const type* module, const type* member, const char* parameters);
 void(*c2::statusproc)(messages m, const type* module, const type* member, const char* parameters);
 
@@ -34,12 +34,6 @@ parsestate::parsestate() : parsestate(ps)
 parsestate::~parsestate()
 {
 	ps = *this;
-}
-
-static void declare_status(messages m, const type* member, ...)
-{
-	if(statusproc)
-		statusproc(m, ps.module, member, xva_start(member));
 }
 
 void c2::status(messages m, ...)
@@ -56,6 +50,12 @@ void c2::status(messages m, ...)
 		if(statusproc)
 			statusproc(m, ps.module, ps.member, xva_start(m));
 	}
+}
+
+static void declare_status(messages m, const type* member, ...)
+{
+	if(statusproc)
+		statusproc(m, ps.module, member, xva_start(member));
 }
 
 static int jumpforward(int a = 0)
@@ -124,32 +124,30 @@ static void unary_operation(evalue& e2, char t1)
 			break;
 		}
 	}
+	if(compiler_backend)
+		compiler_backend->operation(e2, t1);
 }
 
-static void binary_operation(evalue& e2, char t1, char t2)
+static void binary_operation(evalue& e2, char t1, char t2 = 0)
 {
 	if(!e2.next)
 	{
 		status(ErrorExpected1p, "binary operation");
 		return;
 	}
+	// Operation push one operand from stack
 	evalue& e1 = *e2.next;
 	e2.next = 0;
 	switch(t1)
 	{
 	case '.':
 		if(e1.isconst() && e2.isconst())
+		{
 			e1.set(e2);
+			return;
+		}
 		break;
 	}
-}
-
-static void operation(evalue& e2, char t1, char t2 = 0)
-{
-	if(t1 == 'u')
-		unary_operation(e2, t2);
-	else
-		binary_operation(e2, t1, t2);
 }
 
 static void error_sym(const char* name, char sym)
@@ -401,20 +399,16 @@ static void initialize(type* sym)
 				if(*ps.p == '}')
 					break;
 			}
-			//sym->size = sym->csize();
 		}
 		else
 		{
-			bool current_gen_code = gen.code;
-			genstate push;
-			gen.code = false;
 			int i = 0;
 			while(true)
 			{
 				if(i++ >= sym->count)
 				{
 					genstate push;
-					gen.code = current_gen_code;
+					gen.code = false;
 					initialize(sym->result);
 				}
 				else
@@ -472,7 +466,7 @@ static void initialize(type* sym)
 		{
 			while(s>0)
 			{
-				//gen::add((unsigned char)(v & 255), Static);
+				segments[Data]->add((unsigned char)(v & 255));
 				v >>= 8;
 				s--;
 			}
@@ -480,22 +474,20 @@ static void initialize(type* sym)
 	}
 }
 
-static void instance(type* variable, bool analize_code = true)
+static void instance(type* variable)
 {
-	// variable->size = variable->result->getlenght();
-	// Сюда доходим когда размер члена уже известен
-	if(analize_code && *ps.p == '=')
+	if(*ps.p == '=')
 	{
 		next(ps.p + 1);
-		//variable->value = section::data.count;
+		variable->value = segments[Data]->get();
 		initialize(variable);
 	}
 	else
 	{
-		//variable->flags |= UData;
-		//variable->value = section::bbs;
+		//variable->set(NoInitialized);
 		//gen::addz(variable->size, Variable);
 	}
+	variable->size = variable->result->size*variable->count;
 	//// PARAM
 	//variable->value = proc::param;
 	//proc::param += (variable->size + 3) & 0xFFFFFFFC;
@@ -542,6 +534,18 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 			ps.p = p1;
 			return false;
 		}
+		if(gen.unique)
+		{
+			// Test unique members
+			for(auto pm = parent->child; pm; pm = pm->next)
+			{
+				if(pm->id == id)
+				{
+					status(Error1p2pAlreadyDefined, "identifier", id);
+					break;
+				}
+			}
+		}
 		type* m2 = parent->create(id, result, flags);
 		declare_status(StatusDeclare, m2);
 		if(*ps.p == '(')
@@ -551,7 +555,6 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 			ps.member = m2;
 			next(ps.p + 1);
 			m2->setmethod();
-			//gen::begin(m2);
 			m2->count = 0;
 			while(*ps.p)
 			{
@@ -572,10 +575,18 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 				}
 				skip(',');
 			}
-			prologue(m2);
-			statement(0, 0, 0, 0);
-			epilogue(m2);
-			//gen::result(m2);
+			if(*ps.p == ';')
+			{
+				// Forward declaration
+				next(ps.p + 1);
+			}
+			else
+			{
+				prologue(m2);
+				statement(0, 0, 0, 0);
+				epilogue(m2);
+				//gen::result(m2);
+			}
 			return true;
 		}
 		else if(*ps.p == '[')
@@ -687,8 +698,7 @@ static int next_char()
 
 static int next_string()
 {
-	// need for symbol string
-	int result = /*gen::ptr(Literal);*/0;
+	int result = segments[DataStrings]->get();
 	while(*ps.p)
 	{
 		if(*ps.p == '\"')
@@ -836,7 +846,7 @@ static void postfix(evalue& e1)
 			const char* n = szdup(identifier());
 			auto sym = forward_declare(e1.result->findmembers(n), e1.result, n);
 			evalue e2(&e1); e2.set(sym);
-			operation(e2, '.');
+			binary_operation(e2, '.');
 		}
 		else if(*ps.p == '[')
 		{
@@ -847,8 +857,8 @@ static void postfix(evalue& e1)
 			evalue e2(&e1);
 			expression(e2);
 			skip(']');
-			operation(e2, '+');
-			operation(e2, 'u', '*');
+			binary_operation(e2, '+');
+			unary_operation(e2, '*');
 		}
 		else if(ps.p[0] == '-' && ps.p[1] == '-')
 		{
@@ -858,7 +868,7 @@ static void postfix(evalue& e1)
 			//gen::dup();
 			//gen::rvalue(-1);
 			evalue e2(&e1); e2.set(1);
-			operation(e2, '=', '-');
+			binary_operation(e2, '=', '-');
 			//gen::pop();
 		}
 		else if(ps.p[0] == '+' && ps.p[1] == '+')
@@ -869,7 +879,7 @@ static void postfix(evalue& e1)
 			//gen::dup();
 			//gen::rvalue(-1);
 			evalue e2(&e1); e2.set(1);
-			operation(e2, '=', '+');
+			binary_operation(e2, '=', '+');
 			//gen::pop();
 		}
 		else
@@ -888,13 +898,13 @@ static void unary(evalue& e1)
 			next(ps.p + 1);
 			unary(e1);
 			evalue e2(&e1); e2.set(1);
-			operation(e2, '=', '-');
+			binary_operation(e2, '=', '-');
 		}
 		else
 		{
 			next(ps.p+1);
 			unary(e1);
-			operation(e1, 'u', '-');
+			unary_operation(e1, '-');
 		}
 		break;
 	case '+':
@@ -904,7 +914,7 @@ static void unary(evalue& e1)
 			next(ps.p + 1);
 			unary(e1);
 			evalue e2(&e1); e2.set(1);
-			operation(e2, '=', '+');
+			binary_operation(e2, '=', '+');
 		}
 		else
 		{
@@ -915,17 +925,17 @@ static void unary(evalue& e1)
 	case '!':
 		next(ps.p + 1);
 		unary(e1);
-		operation(e1, 'u', '!');
+		unary_operation(e1, '!');
 		break;
 	case '*':
 		next(ps.p + 1);
 		unary(e1);
-		operation(e1, 'u', '*');
+		unary_operation(e1, '*');
 		break;
 	case '&':
 		next(ps.p + 1);
 		unary(e1);
-		operation(e1, 'u', '&');
+		unary_operation(e1, '&');
 		break;
 	case '(':
 		if(!direct_cast(e1))
@@ -972,7 +982,8 @@ static void unary(evalue& e1)
 				sym = ps.module->findmembers(n);
 			if(!sym && ps.module)
 				sym = ps.module->findmembertype(n);
-			sym = forward_declare(sym, ps.module, n);
+			if(!sym)
+				status(ErrorNotFound1p2p, "identifier", n);
 			e1.set(sym);
 		}
 		break;
@@ -990,7 +1001,7 @@ static void multiplication(evalue& e1)
 		evalue e2(&e1);
 		unary(e2);
 		//gen::cast();
-		operation(e2, s);
+		binary_operation(e2, s);
 	}
 }
 
@@ -1004,7 +1015,7 @@ static void addiction(evalue& e1)
 		evalue e2(&e1);
 		multiplication(e2);
 		//gen::cast();
-		operation(e2, s);
+		binary_operation(e2, s);
 	}
 }
 
@@ -1024,7 +1035,7 @@ static void binary_cond(evalue& e1)
 		evalue e2(&e1);
 		addiction(e2);
 		//gen::cast();
-		operation(e2, t1, t2);
+		binary_operation(e2, t1, t2);
 	}
 }
 
@@ -1037,7 +1048,7 @@ static void binary_and(evalue& e1)
 		evalue e2(&e1);
 		binary_cond(e2);
 		//gen::cast();
-		operation(e2, '&');
+		binary_operation(e2, '&');
 	}
 }
 
@@ -1050,7 +1061,7 @@ static void binary_xor(evalue& e1)
 		evalue e2(&e1);
 		binary_and(e2);
 		//gen::cast();
-		operation(e2, '^');
+		binary_operation(e2, '^');
 	}
 }
 
@@ -1063,7 +1074,7 @@ static void binary_or(evalue& e1)
 		evalue e2(&e1);
 		binary_or(e2);
 		//gen::cast();
-		operation(e2, '|');
+		binary_operation(e2, '|');
 	}
 }
 
@@ -1078,7 +1089,7 @@ static void binary_shift(evalue& e1)
 		evalue e2(&e1);
 		binary_or(e2);
 		//gen::cast();
-		operation(e2, t1, t2);
+		binary_operation(e2, t1, t2);
 	}
 }
 
@@ -1129,7 +1140,7 @@ static void assigment(evalue& e1)
 		next(ps.p + 1);
 		evalue e2(&e1);
 		assigment(e2);
-		operation(e2, t1, t2);
+		binary_operation(e2, t1, t2);
 	}
 }
 
@@ -1328,7 +1339,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		if(v1 == v2)
 		{
 			evalue e1(cse); e1.set(v1);
-			operation(e1, '=', '=');
+			binary_operation(e1, '=', '=');
 			csm = testcondition(0, csm);
 		}
 		if(cs)
@@ -1427,8 +1438,8 @@ static void block_imports()
 			}
 			if(match("as"))
 				pz = identifier();
-			e.id = szdup(pz);
 			auto id = szdup(temp);
+			e.id = szdup(pz);
 			e.type = type::findtype(id);
 			if(!e.type)
 			{
@@ -1436,10 +1447,13 @@ static void block_imports()
 				if(e.type->isplatform())
 				{
 					//if(!platform::exist(e.type))
-					//	status(ErrorCantFind1pWithName2p, (int)"platform module", (int)e.type->path());
+					//	status(ErrorCantFind1pWithName2p, "platform module", e.type->path());
 				}
 				else
-					e.type->parse(true);
+				{
+					parsestate push;
+					e.type->parse();
+				}
 			}
 			// Проверим а был ли модуль импортирован ранее в блоке импорта
 			int level = 0;
@@ -1476,19 +1490,18 @@ static void block_start(type* module)
 	}
 	ps.module = module;
 	ps.member = 0;
-	status(StatusStartParse);
 	next(ps.p);
 }
 
-void type::parse(bool quick_header)
+void type::parse()
 {
-	parsestate push;
 	block_start(this);
 	if(errors)
 		return;
 	block_imports();
 	if(errors)
 		return;
+	status(StatusStartParse);
 	block_enums();
 	if(errors)
 		return;
@@ -1498,7 +1511,7 @@ void type::parse(bool quick_header)
 	block_function();
 	if(errors)
 		return;
-	if(*ps.p)
+	if(*ps.p && !errors)
 		status(ErrorUnexpectedSymbols);
 }
 
@@ -1515,8 +1528,7 @@ type* type::compile(const char* id)
 		p = create(id);
 	genstate push;
 	gen.code = false;
-	p->parse(true);
-	gen.code = true;
-	p->parse(false);
+	gen.unique = true;
+	p->parse();
 	return p;
 }
