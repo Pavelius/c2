@@ -136,5 +136,8 @@
     <None Include="c2code\library\core\string.c2">
       <Filter>Code</Filter>
     </None>
+    <None Include="c2code\projects\anytest\main.c2">
+      <Filter>Code</Filter>
+    </None>
   </ItemGroup>
 </Project>

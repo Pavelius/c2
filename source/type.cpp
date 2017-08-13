@@ -54,7 +54,7 @@ type* type::findtype(const char* id)
 	return 0;
 }
 
-type* type::findmembertype(const char* id)
+type* type::findmembertype(const char* id, int modifier_unsigned)
 {
 	// Найдем стандартный тип
 	for(auto e : standart_types)
@@ -64,13 +64,25 @@ type* type::findmembertype(const char* id)
 	}
 	// Маленькие типы
 	if(strcmp(id, "bool") == 0 || strcmp(id, "char") == 0)
+	{
+		if(modifier_unsigned)
+			return type::u8;
 		return type::i8;
+	}
 	// Короткое число
 	if(strcmp(id, "short") == 0)
+	{
+		if(modifier_unsigned)
+			return type::u16;
 		return type::i16;
+	}
 	// Целое число
 	if(strcmp(id, "int") == 0)
+	{
+		if(modifier_unsigned)
+			return type::u32;
 		return type::i32;
+	}
 	// Другие импортируемые типы
 	for(auto p = refs; p; p = p->next)
 	{

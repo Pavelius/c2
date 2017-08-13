@@ -33,6 +33,12 @@ parsestate::~parsestate()
 	ps = *this;
 }
 
+static void declare_status(messages m, const type* member, ...)
+{
+	if(statusproc)
+		statusproc(m, ps.module, member, xva_start(member));
+}
+
 void c2::status(messages m, ...)
 {
 	if(m >= FirstError && m <= LastError)
@@ -81,7 +87,25 @@ static void calling(type* sym, evalue* parameters, int count)
 {
 }
 
-static void operation(evalue& e2, char t1, char t2 = 0)
+static void unary_operation(evalue& e2, char t1)
+{
+	char temp[2];
+	if(e2.isconst())
+	{
+		switch(t1)
+		{
+		case '!': e2.offset = !e2.offset; break;
+		case '-': e2.offset = -e2.offset; break;
+		case '~': e2.offset = ~e2.offset; break;
+		default:
+			temp[0] = t1; temp[1] = 0;
+			status(ErrorNotImplement1p2p, "constant unary operator", temp);
+			break;
+		}
+	}
+}
+
+static void binary_operation(evalue& e2, char t1, char t2)
 {
 	if(!e2.next)
 	{
@@ -97,6 +121,14 @@ static void operation(evalue& e2, char t1, char t2 = 0)
 			e1.set(e2);
 		break;
 	}
+}
+
+static void operation(evalue& e2, char t1, char t2 = 0)
+{
+	if(t1 == 'u')
+		unary_operation(e2, t2);
+	else
+		binary_operation(e2, t1, t2);
 }
 
 static void error_sym(const char* name, char sym)
@@ -272,6 +304,7 @@ static bool istype(c2::type** declared, unsigned& flags)
 	bool result = false;
 	int m_public = 0;
 	int m_static = 0;
+	int m_unsigned = 0;
 	while(*ps.p)
 	{
 		if(match("static"))
@@ -286,13 +319,19 @@ static bool istype(c2::type** declared, unsigned& flags)
 			m_public++;
 			continue;
 		}
+		else if(match("unsigned"))
+		{
+			result = true;
+			m_unsigned++;
+			continue;
+		}
 		else if(ischab(*ps.p))
 		{
 			const char* p1 = ps.p;
 			auto id = szdup(identifier());
 			// Теперь надо найти тип, и убедиться, что это действительно определение
 			bool change_back = true;
-			e = ps.module->findmembertype(id);
+			e = ps.module->findmembertype(id, m_unsigned);
 			if(e)
 			{
 				if(*ps.p == '*' || ischa(*ps.p))
@@ -310,6 +349,8 @@ static bool istype(c2::type** declared, unsigned& flags)
 				status(Error1pDontUse2pTimes, "static", m_static);
 			if(m_public>1)
 				status(Error1pDontUse2pTimes, "public", m_public);
+			if(m_unsigned>1)
+				status(Error1pDontUse2pTimes, "unsigned", m_unsigned);
 			if(m_static)
 				flags |= 1 << Static;
 			if(m_public)
@@ -481,10 +522,12 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 			return false;
 		}
 		type* m2 = parent->create(id, result, flags);
-		ps.member = m2;
-		status(StatusDeclare);
+		declare_status(StatusDeclare, m2);
 		if(*ps.p == '(')
 		{
+			// Если объявляется функция она становится
+			// новым контекстом
+			ps.member = m2;
 			next(ps.p + 1);
 			m2->setmethod();
 			//gen::begin(m2);
@@ -1069,6 +1112,19 @@ static void assigment(evalue& e1)
 	}
 }
 
+static void assigment()
+{
+	evalue e1;
+	assigment(e1);
+}
+
+static void skip_statement(int* ct, int* br, int* cs, int* ds, evalue* cse = 0)
+{
+	genstate push;
+	gen.code = false;
+	statement(ct, br, cs, ds, cse);
+}
+
 static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 {
 	if(match(';'))
@@ -1112,16 +1168,18 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 	else if(match("break"))
 	{
 		if(!br)
-			status(ErrorKeyword1pUsedWithout2p, (int)"break", (int)"loop");
+			status(ErrorKeyword1pUsedWithout2p, "break", "loop");
 		skip(';');
-		*br = jumpforward(*br);
+		if(br)
+			*br = jumpforward(*br);
 	}
 	else if(match("continue"))
 	{
 		if(!ct)
-			status(ErrorKeyword1pUsedWithout2p, (int)"continue", (int)"loop");
+			status(ErrorKeyword1pUsedWithout2p, "continue", "loop");
 		skip(';');
-		jumpback(*ct);
+		if(ct)
+			jumpback(*ct);
 	}
 	else if(match("return"))
 	{
@@ -1142,8 +1200,9 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		int e = 0;
 		while(true)
 		{
+			evalue e1;
 			skip('(');
-			expression();
+			expression(e1);
 			skip(')');
 			int b = testcondition(1);
 			statement(ct, br, cs, ds);
@@ -1156,6 +1215,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 			label(b);
 			if(match("if"))
 				continue;
+			// Else statement - if anything not match
 			statement(ct, br, cs, ds);
 			break;
 		}
@@ -1178,7 +1238,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		int label_break = 0;
 		statement(&label_continue, &label_break, 0, 0);
 		if(!match("while"))
-			status(ErrorExpected1p, (int)"while");
+			status(ErrorExpected1p, "while");
 		skip('(');
 		expression();
 		skip(')');
@@ -1188,6 +1248,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 	else if(match("for"))
 	{
 		skip('(');
+		// Инициализация цикла
 		if(!declaration(ps.member, 0, false))
 		{
 			evalue e1;
@@ -1195,6 +1256,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		}
 		if(*ps.p == ';')
 			skip(';');
+		// Генерируем метку продолжения и проверку условия цикла
 		int label_continue = label();
 		int label_break = 0;
 		expression();
@@ -1203,15 +1265,16 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		// Пропустим блок инкремента
 		const char* p_step = ps.p;
 		expression_nocode();
-		//gen::pop();
 		skip(')');
+		// Генерируем блок тела цикла
 		statement(&label_continue, &label_break, 0, 0);
+		// Генерируем блок инкремента и переход на проверку условия
 		const char* p_next = ps.p;
 		next(p_step);
 		expression();
 		next(p_next);
-		// Продолжим с того места где мы прервали
 		jumpback(label_continue);
+		// Генерируем метку выхода из цикла
 		label(label_break);
 	}
 	else if(match("switch"))
@@ -1239,7 +1302,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		if(cs)
 			label(*cs);
 		else
-			status(ErrorKeyword1pUsedWithout2p, (int)"case", (int)"switch");
+			status(ErrorKeyword1pUsedWithout2p, "case", "switch");
 		int csm = 0;
 		if(v1 == v2)
 		{
@@ -1256,13 +1319,11 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		if(ds)
 			*ds = label();
 		else
-			status(ErrorKeyword1pUsedWithout2p, (int)"default", (int)"switch");
+			status(ErrorKeyword1pUsedWithout2p, "default", "switch");
 	}
 	else if(!declaration(ps.member, 0))
 	{
-		evalue e1;
-		assigment(e1);
-		//gen::pop();
+		assigment();
 		skip(';');
 	}
 }

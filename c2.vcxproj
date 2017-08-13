@@ -61,6 +61,7 @@
     <None Include="c2code\library\core\crt.c2" />
     <None Include="c2code\library\core\lib.c2" />
     <None Include="c2code\library\core\string.c2" />
+    <None Include="c2code\projects\anytest\main.c2" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E7DF717A-4B08-4798-A9FA-B75C49023402}</ProjectGuid>

@@ -1,9 +1,15 @@
 import core.lib as this;
-import ui.message;
 
 int main()
 {
-	int a = message.MB_YESNO;
-	message.text("Any tst auto.","Caption text");
+	int a = 10;
+	if(!a)
+		return 0;
+	int b = 5;
+	while(a>0)
+	{
+		b = b + a - 2;
+		a--;
+	}
 	exit(0);
 }

@@ -21,6 +21,7 @@ namespace c2
 		ErrorAssigmentWithoutEnumeratorMember, ErrorExpectedEnumeratorMember,
 		ErrorSectionNumber,
 		ErrorWrongParamNumber,
+		ErrorNotImplement1p2p,
 		ErrorCastType1pTo2p,
 		ErrorOptions, ErrorCompilator, ErrorLinker,
 		FirstError = ErrorUnexpectedSymbols, LastError = ErrorCastType1pTo2p,
@@ -62,7 +63,7 @@ namespace c2
 		type*			dereference();
 		type*			find(const char* id);
 		type*			findmembers(const char* id);
-		type*			findmembertype(const char* id);
+		type*			findmembertype(const char* id, int modifier_unsigned = 0);
 		static type*	findtype(const char* id);
 		unsigned		getlenght() const { return size*count; }
 		unsigned		getparametercount() const { return ismethod() ? count : 0; }
