@@ -1518,6 +1518,8 @@ bool type::setbackend(const char* progid)
 
 static void compile_member(type* member)
 {
+	if(!member)
+		return;
 	ps.member = member;
 	ps.module = member->parent;
 	if(ps.member)
