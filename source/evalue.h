@@ -11,9 +11,9 @@ namespace c2
 	struct evalue
 	{
 		type*			result;
-		type*			lvalue;
-		int				offset;
 		registers		reg;
+		int				offset;
+		type*			sym;
 		evalue*			next;
 		//
 		evalue();
@@ -21,9 +21,10 @@ namespace c2
 		//
 		void			clear();
 		bool			isconst() const { return reg==Const; }
-		bool			islvalue() const { return lvalue != 0 || result->ispointer(); }
-		void			load(registers r = Eax);
+		bool			islvalue() const { return sym != 0 || result->ispointer(); }
+		//void			load(registers r = Eax);
 		void			set(int value);
+		void			set(registers value);
 		void			set(type* symbol);
 		void			set(const evalue& e);
 	};

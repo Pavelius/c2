@@ -1,3 +1,5 @@
 main PROC
 neg [1]
 ENDP
+exit PROC
+ENDP

@@ -22,7 +22,10 @@ static void status(c2::messages m, const c2::type* module, const c2::type* membe
 		printc("Module %1\n", module->id);
 		break;
 	case c2::StatusDeclare:
-		printc("Declare %1\n", member->id);
+		//printc("Declare %1\n", member->id);
+		break;
+	case c2::StatusCompileMethod:
+		printc("Compile %1.%2()\n", module->id, member->id);
 		break;
 	}
 }

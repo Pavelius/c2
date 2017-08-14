@@ -2,7 +2,12 @@
 
 using namespace c2;
 
-evalue::evalue() : result(type::i32), lvalue(0), offset(0), reg(Const), next(0)
+// Различные способы адресации
+// Число 12 - reg(Const), offset(12)
+// Переменная А - reg(Const), offset(0), sym(A)
+// Переменная А[5] - reg(Const), offset(5*sizeof(A)), sym(A)
+
+evalue::evalue() : result(type::i32), sym(0), offset(0), reg(Const), next(0)
 {
 }
 
@@ -15,7 +20,7 @@ void evalue::set(int value)
 {
 	this->result = type::i32;
 	this->offset = value;
-	this->lvalue = 0;
+	this->sym = 0;
 	this->reg = Const;
 }
 
@@ -27,7 +32,7 @@ void evalue::set(type* value)
 	{
 		this->result = value;
 		this->offset = 0;
-		this->lvalue = 0;
+		this->sym = 0;
 		this->reg = Const;
 	}
 	else if(value->isconstant())
@@ -39,15 +44,15 @@ void evalue::set(type* value)
 	{
 		this->result = value->result;
 		this->offset = 0;
-		this->lvalue = value;
+		this->sym = value;
 		this->reg = Const;
 	}
 }
 
 void evalue::set(const evalue& e)
 {
+	sym = e.sym;
 	result = e.result;
-	lvalue = e.lvalue;
 	offset = e.offset;
 	reg = e.reg;
 }
@@ -57,6 +62,6 @@ void evalue::clear()
 	evalue();
 }
 
-void evalue::load(registers r)
-{
-}
+//void evalue::load(registers r)
+//{
+//}

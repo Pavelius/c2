@@ -34,7 +34,7 @@ struct backend_asm : public backend
 
 	void operand(evalue& e1)
 	{
-		if(e1.lvalue)
+		if(e1.islvalue())
 		{
 			print(Code, "[");
 			if(e1.reg < Const)

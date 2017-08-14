@@ -91,6 +91,16 @@ static void calling(type* sym, evalue* parameters, int count)
 {
 }
 
+static void indirect(evalue& e1)
+{
+	while(e1.result->ispointer())
+	{
+		e1.offset = 0;
+		e1.reg = Eax;
+		e1.result = e1.result->dereference();
+	}
+}
+
 static void prologue(type* sym)
 {
 	if(!gen.code)
@@ -300,9 +310,9 @@ static type* expression_const_type()
 	gen.code = false;
 	evalue e1;
 	expression(e1);
-	if(!e1.isconst() || !e1.lvalue)
+	if(!e1.isconst() || !e1.sym)
 		status(ErrorNeedConstantExpression);
-	auto result =  e1.lvalue;
+	auto result =  e1.sym;
 	if(!result || !result->istype())
 		result = e1.result;
 	return result;
@@ -480,11 +490,14 @@ static void instance(type* variable)
 	if(*ps.p == '=')
 	{
 		next(ps.p + 1);
-		variable->value = segments[Data]->get();
+		if(gen.code)
+			variable->value = segments[Data]->get();
 		initialize(variable);
 	}
 	else
 	{
+		if(gen.code)
+			variable->value = segments[DataUninitialized]->get();
 		//variable->set(NoInitialized);
 		//gen::addz(variable->size, Variable);
 	}
@@ -610,6 +623,9 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 			}
 		}
 		instance(m2);
+		// Если это тип добавим размер
+		if(gen.size && parent->istype())
+			parent->size += m2->size;
 		if(*ps.p == ';')
 		{
 			next(ps.p + 1);
@@ -782,7 +798,7 @@ static int next_number()
 
 static void function_call(evalue& e1)
 {
-	auto sym = e1.lvalue;
+	auto sym = e1.sym;
 	if(!sym->ismethod())
 		status(ErrorNeedFunctionMember);
 	skip('(');
@@ -817,9 +833,9 @@ static void function_call(evalue& e1)
 		status(ErrorWrongParamNumber, sym->id, sym->getparametercount(), count);
 	calling(sym, parameters, count);
 	// function return value
-	e1.lvalue = 0;
-	e1.offset = 0;
 	e1.reg = Eax;
+	e1.offset = 0;
+	e1.sym = 0;
 }
 
 static type* forward_declare(type* sym, type* parent, const char* id)
@@ -847,6 +863,7 @@ static void postfix(evalue& e1)
 		{
 			next(ps.p + 1);
 			const char* n = szdup(identifier());
+			indirect(e1);
 			auto sym = forward_declare(e1.result->findmembers(n), e1.result, n);
 			evalue e2(&e1); e2.set(sym);
 			binary_operation(e2, '.');
@@ -888,6 +905,19 @@ static void postfix(evalue& e1)
 		else
 			break;
 	}
+}
+
+static void register_used_symbol(type* sym)
+{
+	if(!gen.methods)
+		return;
+	for(auto p : used_symbols)
+	{
+		if(p == sym)
+			return;
+	}
+	used_symbols.reserve();
+	used_symbols.add(sym);
 }
 
 static void unary(evalue& e1)
@@ -944,7 +974,8 @@ static void unary(evalue& e1)
 		if(!direct_cast(e1))
 		{
 			next(ps.p + 1);
-			expression(e1);
+			evalue e2(e1);
+			expression(e2);
 			skip(')');
 		}
 		break;
@@ -987,6 +1018,7 @@ static void unary(evalue& e1)
 				sym = ps.module->findmembertype(n);
 			if(!sym)
 				status(ErrorNotFound1p2p, "identifier", n);
+			register_used_symbol(sym);
 			e1.set(sym);
 		}
 		break;
@@ -1418,6 +1450,8 @@ static void block_enums()
 	}
 }
 
+static void parse_module(type* member);
+
 static void block_imports()
 {
 	// Для того чтобы не есть память стэка
@@ -1448,7 +1482,7 @@ static void block_imports()
 			{
 				parsestate push;
 				e.type = type::create(id);
-				e.type->parse();
+				parse_module(e.type);
 			}
 			// Проверим а был ли модуль импортирован ранее в блоке импорта
 			int level = 0;
@@ -1488,9 +1522,9 @@ static void block_start(type* module)
 	next(ps.p);
 }
 
-void type::parse()
+static void parse_module(type* member)
 {
-	block_start(this);
+	block_start(member);
 	if(errors)
 		return;
 	block_imports();
@@ -1527,6 +1561,7 @@ static void compile_member(type* member)
 		ps.p = ps.member->content;
 		if(ps.p)
 		{
+			declare_status(StatusCompileMethod, ps.member);
 			prologue(ps.member);
 			statement(0, 0, 0, 0);
 			epilogue(ps.member);
@@ -1534,20 +1569,35 @@ static void compile_member(type* member)
 	}
 }
 
-type* type::compile(const char* id, const char* start)
+bool type::compile(const char* id, const char* start)
 {
 	auto p = findtype(id);
 	if(!p)
 		p = create(id);
 	genstate push;
+	// 1) Пройдемся по всем модулям, чтобы получить метаданные
 	gen.code = false;
 	gen.unique = true;
-	p->parse();
+	gen.size = true;
+	parse_module(p);
+	if(errors)
+		return false;
+	// 2) Сгенерим код для процедур, которые используются в главной процедуре
+	gen.code = true;
+	gen.unique = false;
+	gen.methods = true;
+	gen.size = false;
 	if(start)
 	{
-		gen.code = true;
-		gen.unique = false;
-		compile_member(p->findmembers(start));
+		auto main_symbol = p->findmembers(start);
+		if(!main_symbol)
+			return false;
+		register_used_symbol(main_symbol);
+		for(int i = 0; i < used_symbols.count; i++)
+		{
+			if(used_symbols.data[i]->ismethod())
+				compile_member(used_symbols.data[i]);
+		}
 	}
-	return p;
+	return true;
 }

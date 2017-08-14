@@ -157,6 +157,9 @@
     <None Include="c2code\library\platform\kernel32.c2">
       <Filter>Code</Filter>
     </None>
+    <None Include="c2code\library\geo\point.c2">
+      <Filter>Code</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="c2code\output\anytest.txt">

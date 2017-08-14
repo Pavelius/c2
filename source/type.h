@@ -26,7 +26,7 @@ namespace c2
 		ErrorCastType1pTo2p,
 		ErrorOptions, ErrorCompilator, ErrorLinker,
 		FirstError = ErrorUnexpectedSymbols, LastError = ErrorCastType1pTo2p,
-		StatusStartParse, StatusEndParse, StatusLink1p, StatusKeyword,
+		StatusStartParse, StatusEndParse, StatusLink1p, StatusKeyword, StatusCompileMethod,
 		StatusDeclare,
 		FirstStatus = StatusStartParse, LastStatus = StatusDeclare,
 	};
@@ -38,14 +38,15 @@ namespace c2
 		const char*		id; // name identifiers ('this' name for base type)
 		unsigned		size; // size of type/requisit (total lenght is multiplied by count), 0 for method
 		int				count; // 0 for type, 1+ for requisit, parameters count for method
-		int				value;
+		int				value; // Offset in section
 		type*			parent; // types, plaform types, reference
 		type*			result; // result of requisit or type pointer
 		type*			child; // child requisits, list of params
 		type*			next; // next element in chain
 		typeref*		refs; // pseudonime and types
-		unsigned		flags;
-		const char*		content;
+		unsigned		flags; // any flags
+		const char*		content; // code source
+		//
 		operator bool() const { return id != 0; }
 		//
 		static type		i8[1];
@@ -58,7 +59,7 @@ namespace c2
 		//
 		static const char* id_this;
 		//
-		static type*	compile(const char* module_id, const char* proc_name = 0);
+		static bool		compile(const char* module_id, const char* proc_name = 0);
 		static type*	create(const char*  id);
 		type*			create(const char*  id, type* result, unsigned flags);
 		static void		cleanup();
@@ -76,9 +77,9 @@ namespace c2
 		bool			istype() const;
 		bool			ismember() const;
 		bool			ismethod() const { return ismember() && size == 0; }
+		bool			ismethodparam() const { return ismember() && size == 0; }
 		bool			isplatform() const;
 		static void		link(const char* id);
-		void			parse();
 		type*			reference();
 		void			set(typeflags value) { flags |= 1 << value; }
 		static bool		setbackend(const char* progid);
