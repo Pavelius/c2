@@ -4,6 +4,7 @@
 using namespace c2;
 
 backend* backend::first;
+backend* backend::current;
 
 backend::backend(const char* progid) : progid(progid)
 {

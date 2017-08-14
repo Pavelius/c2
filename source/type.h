@@ -82,7 +82,6 @@ namespace c2
 		static void		link(const char* id);
 		type*			reference();
 		void			set(typeflags value) { flags |= 1 << value; }
-		static bool		setbackend(const char* progid);
 		void			setconstant(int value);
 		void			setmethod() { size = 0; }
 	};

@@ -13,7 +13,6 @@ struct parsestate
 	const char*				p;
 	struct type*			module;
 	struct type*			member;
-	bool					gencode;
 	parsestate();
 	~parsestate();
 };
@@ -21,7 +20,6 @@ struct parsestate
 static parsestate			ps;
 static adat<type*>			locals;
 static aref<type*>			used_symbols;
-static backend*				compiler_backend;
 static int					errors;
 static void					statement(int* ct, int* br, int* cs, int* ds, evalue* cse = 0);
 static void					logical_or(evalue& e1);
@@ -91,32 +89,24 @@ static void calling(type* sym, evalue* parameters, int count)
 {
 }
 
-static void indirect(evalue& e1)
-{
-	while(e1.result->ispointer())
-	{
-		e1.offset = 0;
-		e1.reg = Eax;
-		e1.result = e1.result->dereference();
-	}
-}
-
 static void prologue(type* sym)
 {
 	if(!gen.code)
 		return;
-	if(!ps.module || !sym || !compiler_backend)
+	if(!ps.module || !sym)
 		return;
-	compiler_backend->prologue(ps.module, sym);
+	if(backend::current)
+		backend::current->prologue(ps.module, sym);
 }
 
 static void epilogue(type* sym)
 {
 	if(!gen.code)
 		return;
-	if(!ps.module || !sym || !compiler_backend)
+	if(!ps.module || !sym)
 		return;
-	compiler_backend->epilogue(ps.module, sym);
+	if(backend::current)
+		backend::current->epilogue(ps.module, sym);
 }
 
 static void unary_operation(evalue& e2, char t1)
@@ -135,8 +125,8 @@ static void unary_operation(evalue& e2, char t1)
 			break;
 		}
 	}
-	if(compiler_backend)
-		compiler_backend->operation(e2, t1);
+	if(backend::current)
+		backend::current->operation(e2, t1);
 }
 
 static void binary_operation(evalue& e2, char t1, char t2 = 0)
@@ -863,7 +853,7 @@ static void postfix(evalue& e1)
 		{
 			next(ps.p + 1);
 			const char* n = szdup(identifier());
-			indirect(e1);
+			e1.getvalue();
 			auto sym = forward_declare(e1.result->findmembers(n), e1.result, n);
 			evalue e2(&e1); e2.set(sym);
 			binary_operation(e2, '.');
@@ -974,7 +964,7 @@ static void unary(evalue& e1)
 		if(!direct_cast(e1))
 		{
 			next(ps.p + 1);
-			evalue e2(e1);
+			evalue e2(&e1);
 			expression(e2);
 			skip(')');
 		}
@@ -1353,7 +1343,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		int break_label = 0;
 		int case_label = 0;
 		int default_label = 0;
-		e1.load();
+		e1.load(Eax);
 		statement(ct, &break_label, &case_label, &default_label, &e1);
 		label(case_label);
 		if(default_label)
@@ -1542,12 +1532,6 @@ static void parse_module(type* member)
 		return;
 	if(*ps.p && !errors)
 		status(ErrorUnexpectedSymbols);
-}
-
-bool type::setbackend(const char* progid)
-{
-	compiler_backend = backend::find(progid);
-	return compiler_backend != 0;
 }
 
 static void compile_member(type* member)

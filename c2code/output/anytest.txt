@@ -1,5 +1,8 @@
 main PROC
 neg [1]
+mov eax, [0]
 ENDP
+
 exit PROC
 ENDP
+

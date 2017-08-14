@@ -62,6 +62,16 @@ struct backend_asm : public backend
 		linefeed();
 	}
 
+	void op(const char* name, registers r1, evalue& e2)
+	{
+		print(Code, name);
+		print(Code, " ");
+		operand(r1);
+		print(Code, ", ");
+		operand(e2);
+		linefeed();
+	}
+
 	void op(const char* name, evalue& e1)
 	{
 		print(Code, name);
@@ -73,6 +83,7 @@ struct backend_asm : public backend
 	void epilogue(type* module, type* member) override
 	{
 		print(Code, "ENDP");
+		linefeed();
 		linefeed();
 	}
 
@@ -104,6 +115,9 @@ struct backend_asm : public backend
 		{
 		case '!':
 			op("neg", e1);
+			break;
+		case 'd':
+			op("mov", Eax, e1);
 			break;
 		}
 	}

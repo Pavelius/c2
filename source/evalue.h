@@ -19,13 +19,19 @@ namespace c2
 		evalue();
 		evalue(evalue* e);
 		//
+		static type		lvalue_type[2];
 		void			clear();
+		void			dereference();
 		bool			isconst() const { return reg==Const; }
-		bool			islvalue() const { return sym != 0 || result->ispointer(); }
-		//void			load(registers r = Eax);
+		bool			islvalue() const { return sym != 0; }
+		static int		localalloc(unsigned size);
+		registers		getfree() const;
+		void			getvalue();
+		void			load(registers r);
+		void			save(registers r);
 		void			set(int value);
-		void			set(registers value);
 		void			set(type* symbol);
 		void			set(const evalue& e);
+		void			xchange(evalue& e);
 	};
 }
