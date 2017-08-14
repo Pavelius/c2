@@ -10,16 +10,17 @@ using namespace c2;
 
 struct parsestate
 {
-	const char*			p;
-	struct type*		module;
-	struct type*		member;
-	bool				gencode;
+	const char*				p;
+	struct type*			module;
+	struct type*			member;
+	bool					gencode;
 	parsestate();
 	~parsestate();
 };
 
 static parsestate			ps;
 static adat<type*>			locals;
+static aref<type*>			used_symbols;
 static backend*				compiler_backend;
 static int					errors;
 static void					statement(int* ct, int* br, int* cs, int* ds, evalue* cse = 0);
@@ -812,7 +813,7 @@ static void function_call(evalue& e1)
 		//gen::param();
 		//gen::pop();
 	}
-	if(sym->getparametercount()!=count && !sym->isplatform())
+	if(sym->getparametercount()!=count)
 		status(ErrorWrongParamNumber, sym->id, sym->getparametercount(), count);
 	calling(sym, parameters, count);
 	// function return value
@@ -833,7 +834,6 @@ static type* forward_declare(type* sym, type* parent, const char* id)
 	}
 	sym = parent->create(id, type::i32, 0);
 	sym->setmethod();
-	sym->set(Forward);
 	return sym;
 }
 
@@ -1446,17 +1446,9 @@ static void block_imports()
 			e.type = type::findtype(id);
 			if(!e.type)
 			{
+				parsestate push;
 				e.type = type::create(id);
-				if(e.type->isplatform())
-				{
-					//if(!platform::exist(e.type))
-					//	status(ErrorCantFind1pWithName2p, "platform module", e.type->path());
-				}
-				else
-				{
-					parsestate push;
-					e.type->parse();
-				}
+				e.type->parse();
 			}
 			// Проверим а был ли модуль импортирован ранее в блоке импорта
 			int level = 0;
@@ -1524,7 +1516,23 @@ bool type::setbackend(const char* progid)
 	return compiler_backend != 0;
 }
 
-type* type::compile(const char* id)
+static void compile_member(type* member)
+{
+	ps.member = member;
+	ps.module = member->parent;
+	if(ps.member)
+	{
+		ps.p = ps.member->content;
+		if(ps.p)
+		{
+			prologue(ps.member);
+			statement(0, 0, 0, 0);
+			epilogue(ps.member);
+		}
+	}
+}
+
+type* type::compile(const char* id, const char* start)
 {
 	auto p = findtype(id);
 	if(!p)
@@ -1533,5 +1541,11 @@ type* type::compile(const char* id)
 	gen.code = false;
 	gen.unique = true;
 	p->parse();
+	if(start)
+	{
+		gen.code = true;
+		gen.unique = false;
+		compile_member(p->findmembers(start));
+	}
 	return p;
 }

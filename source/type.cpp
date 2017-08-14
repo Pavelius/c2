@@ -22,9 +22,9 @@ const char*				type::id_this;
 const unsigned			pointer_size = 4;
 //
 static autogrow<type>	globals;
-static type*			types; // main project types
-static type*			types_ref; // pointers to main types
-static type*			types_platform; // platform types
+static type				types[2]; // main project types
+static type				types_ref[2]; // pointers to main types
+static type				types_platform[2]; // platform types
 
 static type* new_type()
 {
@@ -51,16 +51,22 @@ bool type::ispointer() const
 	return this && (parent == types_ref);
 }
 
+bool type::isplatform() const
+{
+	return (parent == types_platform)
+		|| (parent && parent->parent == types_platform);
+}
+
 type* type::findtype(const char* id)
 {
 	// Стандартные типы
-	for(auto p = types; p; p = p->next)
+	for(auto p = types[0].child; p; p = p->next)
 	{
 		if(p->id == id)
 			return p;
 	}
 	// Типы платформы
-	for(auto p = types_platform; p; p = p->next)
+	for(auto p = types_platform[0].child; p; p = p->next)
 	{
 		if(p->id == id)
 			return p;
@@ -178,18 +184,18 @@ type* type::create(const char* id)
 	p->id = id;
 	if(isplatformid(id))
 	{
-		if(!types_platform)
-			types_platform = p;
+		if(!types_platform[0].child)
+			types_platform[0].child = p;
 		else
-			seqlast(types_platform)->next = p;
+			seqlast(types_platform[0].child)->next = p;
 		p->parent = types_platform;
 	}
 	else
 	{
-		if(!types)
-			types = p;
+		if(!types[0].child)
+			types[0].child = p;
 		else
-			seqlast(types)->next = p;
+			seqlast(types[0].child)->next = p;
 		p->parent = types;
 	}
 	return p;
@@ -224,7 +230,7 @@ type* type::reference()
 {
 	if(!this)
 		return 0;
-	for(auto p = types_ref; p; p = p->next)
+	for(auto p = types_ref[0].child; p; p = p->next)
 	{
 		if(p->result == this)
 			return p;
@@ -232,20 +238,13 @@ type* type::reference()
 	auto p = create(id);
 	p->result = this;
 	p->parent = types_ref;
-	if(!types_ref)
-		types_ref = p;
+	p->size = pointer_size;
+	p->count = 1;
+	if(!types_ref[0].child)
+		types_ref[0].child = p;
 	else
-		seqlast(types_ref)->next = p;
+		seqlast(types_ref[0].child)->next = p;
 	return p;
-}
-
-bool type::isplatform() const
-{
-	if(istype())
-		return isplatformid(id);
-	if(ismethod())
-		return parent == types_platform;
-	return false;
 }
 
 type* type::dereference()

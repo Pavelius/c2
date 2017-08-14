@@ -1,0 +1,3 @@
+main PROC
+neg [1]
+ENDP

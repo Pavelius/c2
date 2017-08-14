@@ -31,7 +31,7 @@ namespace c2
 		FirstStatus = StatusStartParse, LastStatus = StatusDeclare,
 	};
 	enum typeflags : char {
-		Private, Static, Forward, Readed, Writed, NoInitialized,
+		Private, Static, Readed, Writed, NoInitialized,
 	};
 	struct type
 	{
@@ -58,7 +58,7 @@ namespace c2
 		//
 		static const char* id_this;
 		//
-		static type*	compile(const char* module_id);
+		static type*	compile(const char* module_id, const char* proc_name = 0);
 		static type*	create(const char*  id);
 		type*			create(const char*  id, type* result, unsigned flags);
 		static void		cleanup();
