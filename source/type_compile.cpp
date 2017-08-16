@@ -1,7 +1,6 @@
 #include "adat.h"
 #include "crt.h"
 #include "genstate.h"
-#include "backend.h"
 #include "evalue.h"
 #include "files.h"
 #include "segment.h"
@@ -91,22 +90,18 @@ static void calling(type* sym, evalue* parameters, int count)
 
 static void prologue(type* sym)
 {
-	if(!gen.code)
-		return;
 	if(!ps.module || !sym)
 		return;
-	if(backend::current)
-		backend::current->prologue(ps.module, sym);
+	if(gen.code)
+		backend->prologue(ps.module, sym);
 }
 
 static void epilogue(type* sym)
 {
-	if(!gen.code)
-		return;
 	if(!ps.module || !sym)
 		return;
-	if(backend::current)
-		backend::current->epilogue(ps.module, sym);
+	if(gen.code)
+		backend->epilogue(ps.module, sym);
 }
 
 static void unary_operation(evalue& e2, char t1)
@@ -116,17 +111,16 @@ static void unary_operation(evalue& e2, char t1)
 	{
 		switch(t1)
 		{
-		case '!': e2.offset = !e2.offset; break;
-		case '-': e2.offset = -e2.offset; break;
-		case '~': e2.offset = ~e2.offset; break;
+		case '!': e2.offset = !e2.offset; return;
+		case '-': e2.offset = -e2.offset; return;
+		case '~': e2.offset = ~e2.offset; return;
 		default:
 			temp[0] = t1; temp[1] = 0;
 			status(ErrorNotImplement1p2p, "constant unary operator", temp);
 			break;
 		}
 	}
-	if(backend::current)
-		backend::current->operation(e2, t1);
+	backend->operation(e2, t1);
 }
 
 static void binary_operation(evalue& e2, char t1, char t2 = 0)

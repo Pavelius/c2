@@ -1,11 +1,8 @@
 #include "crt.h"
-#include "backend.h"
 #include "evalue.h"
 #include "genstate.h"
 
 using namespace c2;
-
-type evalue::lvalue_type[2];
 
 // Различные способы адресации
 // Число 12 - reg(Const), offset(12), sym(0)
@@ -18,6 +15,9 @@ type evalue::lvalue_type[2];
 
 // Формула адресации
 // [reg + sym.offset + offset]
+
+static type		lvalue_type[2];
+evalue::plugin*	c2::backend;
 
 evalue::evalue() : result(type::i32), sym(0), offset(0), reg(Const), next(0)
 {
@@ -69,6 +69,11 @@ void evalue::set(const evalue& e)
 	reg = e.reg;
 }
 
+void evalue::setlvalue()
+{
+	sym = lvalue_type;
+}
+
 void evalue::clear()
 {
 	evalue();
@@ -105,8 +110,8 @@ void evalue::load(registers r)
 	{
 		evalue e2(this);
 		e2.reg = r;
-		if(backend::current && gen.code)
-			backend::current->operation(e2, *this, '=');
+		if(gen.code)
+			backend->operation(e2, *this, '=');
 	}
 	reg = r;
 	offset = 0;
@@ -118,12 +123,10 @@ void evalue::dereference()
 	if(result->ispointer())
 	{
 		getrvalue();
-		if(backend::current)
-		{
-			evalue e2(this);
-			e2.sym = lvalue_type;
-			backend::current->operation(*this, e2, '=');
-		}
+		evalue e2(this);
+		e2.sym = lvalue_type;
+		if(gen.code)
+			backend->operation(*this, e2, '=');
 		offset = 0;
 		sym = 0;
 		result = result->dereference();

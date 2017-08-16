@@ -1,7 +1,7 @@
-#include "backend.h"
 #include "crt.h"
-#include "io.h"
 #include "dasm.h"
+#include "evalue.h"
+#include "io.h"
 #include "files.h"
 #include "evalue.h"
 
@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
 	c2::urls::library = "library";
 	c2::urls::platform = "C:/windows/system32";
 	c2::type::cleanup();
-	c2::backend::current = c2::backend::find("asm");
-	if(!c2::backend::current)
+	c2::backend = c2::evalue::plugin::find("asm");
+	if(!c2::backend)
 		return 0;
 	c2::type::compile(szdup("main"), szdup("main"));
 	c2::type::link(szdup("anytest"));

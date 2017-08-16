@@ -58,11 +58,11 @@
     <ClCompile Include="source\backend_asm.cpp">
       <Filter>Backend</Filter>
     </ClCompile>
-    <ClCompile Include="source\backend.cpp">
-      <Filter>Backend</Filter>
-    </ClCompile>
     <ClCompile Include="source\type_linker.cpp">
       <Filter>Linker</Filter>
+    </ClCompile>
+    <ClCompile Include="source\evalue_plugin.cpp">
+      <Filter>Compiler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -110,9 +110,6 @@
     </ClInclude>
     <ClInclude Include="source\files.h">
       <Filter>Startup</Filter>
-    </ClInclude>
-    <ClInclude Include="source\backend.h">
-      <Filter>Backend</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

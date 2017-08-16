@@ -1,12 +1,12 @@
 #include "crt.h"
-#include "backend.h"
+#include "evalue.h"
 #include "segment.h"
 
 using namespace c2;
 
 static const char* reg_name32[] = {"eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp"};
 
-struct backend_asm : public backend
+struct backend_asm : public evalue::plugin
 {
 
 	void printz(sectiontypes type, const char* format)
@@ -127,7 +127,7 @@ struct backend_asm : public backend
 		return a;
 	}
 
-	backend_asm() : backend("asm")
+	backend_asm() : plugin("asm")
 	{
 	}
 
