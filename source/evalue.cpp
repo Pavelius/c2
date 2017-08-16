@@ -115,10 +115,9 @@ void evalue::load(registers r)
 
 void evalue::dereference()
 {
-	if(reg >= Const)
-		return; // Fool's defence
-	while(result->ispointer())
+	if(result->ispointer())
 	{
+		getrvalue();
 		if(backend::current)
 		{
 			evalue e2(this);
@@ -131,11 +130,10 @@ void evalue::dereference()
 	}
 }
 
-void evalue::getvalue()
+void evalue::getrvalue()
 {
-	if(sym == 0)
-		return;
-	load(getfree());
+	if(islvalue())
+		load(getfree());
 }
 
 void evalue::xchange(evalue& e)

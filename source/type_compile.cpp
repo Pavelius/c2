@@ -853,7 +853,9 @@ static void postfix(evalue& e1)
 		{
 			next(ps.p + 1);
 			const char* n = szdup(identifier());
-			e1.getvalue();
+			if(e1.result->ispointer())
+				e1.dereference();
+			e1.getrvalue();
 			auto sym = forward_declare(e1.result->findmembers(n), e1.result, n);
 			evalue e2(&e1); e2.set(sym);
 			binary_operation(e2, '.');

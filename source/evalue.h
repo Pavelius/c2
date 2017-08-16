@@ -26,7 +26,7 @@ namespace c2
 		bool			islvalue() const { return sym != 0; }
 		static int		localalloc(unsigned size);
 		registers		getfree() const;
-		void			getvalue();
+		void			getrvalue();
 		void			load(registers r);
 		void			save(registers r);
 		void			set(int value);
