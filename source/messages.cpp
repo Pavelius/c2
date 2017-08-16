@@ -7,6 +7,7 @@ template<> const char* getstr<messages>(messages value)
 {
 	switch(value)
 	{
+	case ErrorExpected1p: return "expected '%1'";
 	case ErrorCastType1pTo2p: return "invalid type cast '%1' to '%2'";
 	case ErrorOperation1pNotUsedWithOperands2pAnd3p: return "operator '%1' not used with '%2' and '%3' operands";
 	case ErrorUnexpectedSymbols: return "unexpected symbols in end of file";

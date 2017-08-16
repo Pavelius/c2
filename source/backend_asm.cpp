@@ -34,16 +34,16 @@ struct backend_asm : public evalue::plugin
 
 	void operand(evalue& e1)
 	{
-		if(e1.islvalue())
+		if(e1.sym)
 		{
 			print(Code, "[");
 			if(e1.reg < Const)
 			{
 				operand(e1.reg);
-				print(Code, "%+1i", e1.offset);
+				print(Code, "%+1i", e1.offset + e1.sym->value);
 			}
 			else
-				print(Code, "%1i", e1.offset);
+				print(Code, "%1i", e1.offset + e1.sym->value);
 			print(Code, "]");
 		}
 		else if(e1.reg == Const)

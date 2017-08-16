@@ -58,6 +58,8 @@ void evalue::set(type* value)
 		this->offset = 0;
 		this->sym = value;
 		this->reg = Const;
+		if(value->islocal())
+			this->reg = Ebp;
 	}
 }
 

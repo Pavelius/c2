@@ -71,17 +71,19 @@ namespace c2
 		type*			findmembertype(const char* id, int modifier_unsigned = 0);
 		static type*	findtype(const char* id);
 		unsigned		getparametercount() const { return ismethod() ? count : 0; }
+		type*			getprevious();
 		bool			is(typeflags value) const { return (flags&(1 << value)) != 0; }
 		bool			isarray() const { return count > 1; }
 		bool			isconstant() const { return count == -1 && size == 0; }
 		bool			isforward() const { return ismethod() && !content; }
-		bool			ispointer() const;
-		bool			istype() const;
+		bool			islocal() const;
 		bool			ismember() const;
 		bool			ismethod() const { return ismember() && size == 0; }
 		bool			ismethodparam() const { return ismember() && size == 0; }
 		bool			isnumber() const;
 		bool			isplatform() const;
+		bool			ispointer() const;
+		bool			istype() const;
 		static void		link(const char* id);
 		type*			reference();
 		void			set(typeflags value) { flags |= 1 << value; }

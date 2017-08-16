@@ -22,6 +22,7 @@ static aref<type*>			used_symbols;
 static int					errors;
 static void					statement(int* ct, int* br, int* cs, int* ds, evalue* cse = 0);
 static void					logical_or(evalue& e1);
+static void					assigment(evalue& e1);
 void(*c2::errorproc)(messages m, const type* module, const type* member, const char* parameters);
 void(*c2::statusproc)(messages m, const type* module, const type* member, const char* parameters);
 
@@ -88,7 +89,7 @@ static int label()
 static void addr32(int v, type* sym)
 {
 	auto s = 4;
-	while(s>0)
+	while(s > 0)
 	{
 		segments[Data]->add((unsigned char)(v & 255));
 		v >>= 8;
@@ -165,8 +166,8 @@ static void binary_operation(evalue& e2, char t1, char t2 = 0)
 			{
 				switch(t1)
 				{
-				case '+': e1.offset += e1.result->size*e2.offset; return;
-				case '-': e1.offset -= e1.result->size*e2.offset; return;
+				case '+': e1.offset += e1.result->result->size*e2.offset; return;
+				case '-': e1.offset -= e1.result->result->size*e2.offset; return;
 				}
 			}
 		}
@@ -177,7 +178,7 @@ static void binary_operation(evalue& e2, char t1, char t2 = 0)
 		{
 		case '.': e1.set(e2); return;
 		case '&':
-			if(t2==t1)
+			if(t2 == t1)
 				e1.offset = e1.offset && e2.offset;
 			else
 				e1.offset &= e2.offset;
@@ -205,7 +206,8 @@ static void binary_operation(evalue& e2, char t1, char t2 = 0)
 			return;
 		}
 	}
-	backend->operation(e1, e2, t1, t2);
+	if(gen.code)
+		backend->operation(e1, e2, t1, t2);
 }
 
 static bool skipcm()
@@ -249,7 +251,7 @@ static void skip(char sym)
 		next(ps.p + 1);
 	else
 	{
-		char opname[] = {'\'', sym, '\'', 0};
+		char opname[] = {sym, 0};
 		status(ErrorExpected1p, opname);
 	}
 }
@@ -358,7 +360,7 @@ static type* expression_const_type()
 	expression(e1);
 	if(!e1.isconst() || !e1.sym)
 		status(ErrorNeedConstantExpression);
-	auto result =  e1.sym;
+	auto result = e1.sym;
 	if(!result || !result->istype())
 		result = e1.result;
 	return result;
@@ -421,11 +423,11 @@ static bool istype(c2::type** declared, unsigned& flags)
 		}
 		if(result)
 		{
-			if(m_static>1)
+			if(m_static > 1)
 				status(Error1pDontUse2pTimes, "static", m_static);
-			if(m_public>1)
+			if(m_public > 1)
 				status(Error1pDontUse2pTimes, "public", m_public);
-			if(m_unsigned>1)
+			if(m_unsigned > 1)
 				status(Error1pDontUse2pTimes, "unsigned", m_unsigned);
 			if(m_static)
 				flags |= 1 << Static;
@@ -440,9 +442,9 @@ static bool istype(c2::type** declared, unsigned& flags)
 
 static void initialize(type* sym)
 {
-	if(sym->count && *ps.p=='{')
+	if(sym->count && *ps.p == '{')
 	{
-		next(ps.p+1);
+		next(ps.p + 1);
 		if(sym->count == -1)
 		{
 			sym->count = 0;
@@ -523,7 +525,7 @@ static void initialize(type* sym)
 		// simple type
 		int s = sym->size;
 		int v = expression_const();
-		while(s>0)
+		while(s > 0)
 		{
 			segments[Data]->add((unsigned char)(v & 255));
 			v >>= 8;
@@ -532,19 +534,44 @@ static void initialize(type* sym)
 	}
 }
 
-static void instance(type* variable)
+static int get_stack_frame(type* variable)
 {
+	return 8;
+}
+
+static void instance(type* variable, bool allow_assigment)
+{
+	bool was_initialized = (*ps.p == '=');
+	if(gen.code)
+	{
+		if(variable->parent->ismethod())
+		{
+			auto previous = variable->getprevious();
+			variable->value = previous ? previous->value + previous->size : get_stack_frame(variable->parent);
+		}
+		else if(variable->is(Static))
+		{
+			if(was_initialized)
+				variable->value = segments[Data]->get();
+			else
+				variable->value = segments[DataUninitialized]->get();
+		}
+	}
 	if(*ps.p == '=')
 	{
 		next(ps.p + 1);
-		if(gen.code)
-			variable->value = segments[Data]->get();
+		if(allow_assigment && *ps.p != '{')
+		{
+			evalue e1; e1.set(variable);
+			evalue e2(&e1);
+			assigment(e2);
+			binary_operation(e2, '=');
+			return;
+		}
 		initialize(variable);
 	}
 	else
 	{
-		if(gen.code)
-			variable->value = segments[DataUninitialized]->get();
 		//variable->set(NoInitialized);
 		//gen::addz(variable->size, Variable);
 	}
@@ -575,7 +602,7 @@ static void instance(type* variable)
 }
 
 // „тобы можно было в секции данных размещать ресурсы и подт€гивать их под переменные.
-static bool declaration(type* parent, unsigned flags, bool allow_functions = true, bool allow_variables = true)
+static bool declaration(type* parent, unsigned flags, bool allow_functions = true, bool allow_variables = true, bool allow_dynamic_isntance = false)
 {
 	type* declared;
 	const char* p1 = ps.p;
@@ -669,7 +696,7 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 				skip(']');
 			}
 		}
-		instance(m2);
+		instance(m2, allow_dynamic_isntance);
 		// ≈сли это тип добавим размер
 		if(gen.size && parent->istype())
 			parent->size += m2->size;
@@ -756,7 +783,7 @@ static int next_char()
 			next(ps.p + 1);
 			break;
 		}
-		if(d1<d2)
+		if(d1 < d2)
 			*d1++ = next_string_symbol();
 	}
 	*d1++ = 0;
@@ -889,7 +916,7 @@ static void function_call(evalue& e1)
 		//gen::param();
 		//gen::pop();
 	}
-	if(sym->getparametercount()!=count)
+	if(sym->getparametercount() != count)
 		status(ErrorWrongParamNumber, sym->id, sym->getparametercount(), count);
 	calling(sym, parameters, count);
 	// function return value
@@ -941,7 +968,7 @@ static void postfix(evalue& e1)
 			expression(e2);
 			skip(']');
 			binary_operation(e2, '+');
-			unary_operation(e2, '*');
+			e1.getrvalue();
 		}
 		else if(ps.p[0] == '-' && ps.p[1] == '-')
 		{
@@ -998,7 +1025,7 @@ static void unary(evalue& e1)
 		}
 		else
 		{
-			next(ps.p+1);
+			next(ps.p + 1);
 			unary(e1);
 			unary_operation(e1, '-');
 		}
@@ -1014,7 +1041,7 @@ static void unary(evalue& e1)
 		}
 		else
 		{
-			next(ps.p+1);
+			next(ps.p + 1);
 			unary(e1);
 		}
 		break;
@@ -1451,7 +1478,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		else
 			status(ErrorKeyword1pUsedWithout2p, "default", "switch");
 	}
-	else if(!declaration(ps.member, 0))
+	else if(!declaration(ps.member, 0, false, true, true))
 	{
 		assigment();
 		skip(';');
@@ -1460,7 +1487,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 
 static void block_declaration()
 {
-	while(declaration(ps.module, 1<<Static, false, true));
+	while(declaration(ps.module, 1 << Static, false, true));
 }
 
 static void block_function()

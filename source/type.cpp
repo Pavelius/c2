@@ -46,6 +46,11 @@ bool type::ismember() const
 	return this && !(parent == types || parent == types_platform || parent == types_ref);
 }
 
+bool type::islocal() const
+{
+	return this && parent && parent->ismember();
+}
+
 bool type::ispointer() const
 {
 	return this && (parent == types_ref);
@@ -300,4 +305,14 @@ void type::cleanup()
 	globals.clear(); memset(globals.data, 0, sizeof(globals.data));
 	typeref::cleanup();
 	initialize_types();
+}
+
+type* type::getprevious()
+{
+	for(auto p = parent->child; p; p = p->next)
+	{
+		if(p->next == this)
+			return p;
+	}
+	return 0;
 }
