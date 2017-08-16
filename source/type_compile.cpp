@@ -84,6 +84,18 @@ static int label()
 	return segments[Code]->get();
 }
 
+
+static void addr32(int v, type* sym)
+{
+	auto s = 4;
+	while(s>0)
+	{
+		segments[Data]->add((unsigned char)(v & 255));
+		v >>= 8;
+		s--;
+	}
+}
+
 static void calling(type* sym, evalue* parameters, int count)
 {
 }
@@ -120,7 +132,8 @@ static void unary_operation(evalue& e2, char t1)
 			break;
 		}
 	}
-	backend->operation(e2, t1);
+	if(gen.code)
+		backend->operation(e2, t1);
 }
 
 static void binary_operation(evalue& e2, char t1, char t2 = 0)
@@ -133,20 +146,66 @@ static void binary_operation(evalue& e2, char t1, char t2 = 0)
 	// Operation push one operand from stack
 	evalue& e1 = *e2.next;
 	e2.next = 0;
-	switch(t1)
+	if(e1.result->ispointer())
 	{
-	case '.':
-		if(e1.isconst() && e2.isconst())
+		if(e2.result->isnumber())
 		{
-			e1.set(e2);
+			char opname[2];
+			switch(t1)
+			{
+			case '+':
+			case '-':
+				break;
+			default:
+				opname[0] = t1; opname[1] = 0;
+				status(ErrorOperation1pNotUsedWithOperands2pAnd3p, opname, "pointer", "number");
+				break;
+			}
+			if(e1.isconst() && e2.isconst() && !e2.islvalue())
+			{
+				switch(t1)
+				{
+				case '+': e1.offset += e1.result->size*e2.offset; return;
+				case '-': e1.offset -= e1.result->size*e2.offset; return;
+				}
+			}
+		}
+	}
+	else if(e1.isconst() && e2.isconst()) // Constant case
+	{
+		switch(t1)
+		{
+		case '.': e1.set(e2); return;
+		case '&':
+			if(t2==t1)
+				e1.offset = e1.offset && e2.offset;
+			else
+				e1.offset &= e2.offset;
+			return;
+		case '|':
+			if(t2 == t1)
+				e1.offset = e1.offset || e2.offset;
+			else
+				e1.offset |= e2.offset;
+			return;
+		case '+': e1.offset += e2.offset; return;
+		case '-': e1.offset += e2.offset; return;
+		case '*': e1.offset *= e2.offset; return;
+		case '/':
+			if(!e2.offset)
+				status(ErrorDivideByZero);
+			else
+				e1.offset /= e2.offset;
+			return;
+		case '%':
+			if(!e2.offset)
+				status(ErrorDivideByZero);
+			else
+				e1.offset %= e2.offset;
 			return;
 		}
-		break;
 	}
-}
-
-static void error_sym(const char* name, char sym)
-{
+	backend->operation(e1, e2, t1, t2);
 }
 
 static bool skipcm()
@@ -189,7 +248,10 @@ static void skip(char sym)
 	if(*ps.p == sym)
 		next(ps.p + 1);
 	else
-		error_sym("expected symbol \'%1\'", sym);
+	{
+		char opname[] = {'\'', sym, '\'', 0};
+		status(ErrorExpected1p, opname);
+	}
 }
 
 static bool ischab(char sym)
@@ -446,6 +508,14 @@ static void initialize(type* sym)
 		}
 		skip(',');
 	}
+	else if(sym->ispointer())
+	{
+		evalue e1;
+		expression(e1);
+		if(!e1.isconst())
+			status(ErrorNeedConstantExpression);
+		addr32(e1.offset, e1.sym);
+	}
 	else if(sym->result)
 		initialize(sym->result);
 	else
@@ -453,18 +523,11 @@ static void initialize(type* sym)
 		// simple type
 		int s = sym->size;
 		int v = expression_const();
-		if(sym->ispointer())
+		while(s>0)
 		{
-			//gen::add32(v, Static);
-		}
-		else
-		{
-			while(s>0)
-			{
-				segments[Data]->add((unsigned char)(v & 255));
-				v >>= 8;
-				s--;
-			}
+			segments[Data]->add((unsigned char)(v & 255));
+			v >>= 8;
+			s--;
 		}
 	}
 }
@@ -700,9 +763,20 @@ static int next_char()
 	return *((int*)&result);
 }
 
-static int next_string()
+static int get_string(const char* temp)
 {
 	int result = segments[DataStrings]->get();
+	for(auto p = temp; *p; p++)
+		segments[DataStrings]->add((unsigned char)*p);
+	segments[DataStrings]->add(0);
+	return result;
+}
+
+static int next_string()
+{
+	static char temp_buffer[256 * 256];
+	auto pb = temp_buffer;
+	auto pe = pb + sizeof(temp_buffer) - 2;
 	while(*ps.p)
 	{
 		if(*ps.p == '\"')
@@ -728,10 +802,12 @@ static int next_string()
 			}
 			break;
 		}
-		segments[DataStrings]->add((unsigned char)next_string_symbol());
+		auto sym = next_string_symbol();
+		if(pb < pe)
+			*pb++ = sym;
 	}
-	segments[DataStrings]->add(0);
-	return result;
+	*pb = 0;
+	return get_string(temp_buffer);
 }
 
 static int next_number()
@@ -857,9 +933,10 @@ static void postfix(evalue& e1)
 		else if(*ps.p == '[')
 		{
 			next(ps.p + 1);
+			if(e1.sym && e1.sym->isarray())
+				e1.result = e1.result->reference();
 			if(!e1.result->ispointer())
 				status(ErrorNeedPointerOrArray);
-			//gen::rvalue(0);
 			evalue e2(&e1);
 			expression(e2);
 			skip(']');

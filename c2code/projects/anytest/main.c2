@@ -1,22 +1,17 @@
-import geo.rect;
-import core.lib as this;
-
+static char* string = "Count is good";
 static char t1[8] = {12, 8, 10};
 static char t2[] = {2, 4, 0};
-static char* string = "Count is good";
 
 int main()
 {
-	rect rc;
+	int c = t1[3];
 	int a = 10;
 	if(!a)
 		return 0;
 	int b = 5;
-	rc.x1 = 10;
 	while(a>0)
 	{
 		b = b + a - 2;
 		a--;
 	}
-	exit(0);
 }

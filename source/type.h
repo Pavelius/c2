@@ -7,6 +7,7 @@ namespace c2
 	enum messages
 	{
 		ErrorUnexpectedSymbols, ErrorExpected1p,
+		ErrorDivideByZero,
 		ErrorInvalidEscapeSequence,
 		ErrorInvalid1p2pIn3p,
 		ErrorCantFind1pWithName2p,
@@ -71,6 +72,7 @@ namespace c2
 		static type*	findtype(const char* id);
 		unsigned		getparametercount() const { return ismethod() ? count : 0; }
 		bool			is(typeflags value) const { return (flags&(1 << value)) != 0; }
+		bool			isarray() const { return count > 1; }
 		bool			isconstant() const { return count == -1 && size == 0; }
 		bool			isforward() const { return ismethod() && !content; }
 		bool			ispointer() const;
@@ -78,6 +80,7 @@ namespace c2
 		bool			ismember() const;
 		bool			ismethod() const { return ismember() && size == 0; }
 		bool			ismethodparam() const { return ismember() && size == 0; }
+		bool			isnumber() const;
 		bool			isplatform() const;
 		static void		link(const char* id);
 		type*			reference();

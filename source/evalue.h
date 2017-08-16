@@ -37,7 +37,7 @@ namespace c2
 		//
 		void				clear();
 		void				dereference();
-		bool				isconst() const { return reg==Const; }
+		bool				isconst() const { return reg == Const; }
 		bool				islvalue() const { return sym != 0; }
 		static int			localalloc(unsigned size);
 		registers			getfree() const;

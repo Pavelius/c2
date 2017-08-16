@@ -1,7 +1,0 @@
-main PROC
-mov eax, [0]
-ENDP
-
-exit PROC
-ENDP
-

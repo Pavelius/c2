@@ -51,6 +51,16 @@ bool type::ispointer() const
 	return this && (parent == types_ref);
 }
 
+bool type::isnumber() const
+{
+	return this == type::i8
+		|| this == type::u8
+		|| this == type::i16
+		|| this == type::u16
+		|| this == type::i32
+		|| this == type::u32;
+}
+
 bool type::isplatform() const
 {
 	return (parent == types_platform)
