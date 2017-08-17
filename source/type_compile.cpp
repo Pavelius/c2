@@ -249,7 +249,7 @@ static void skip(char sym)
 {
 	if(*ps.p == sym)
 		next(ps.p + 1);
-	else
+	else if(*ps.p)
 	{
 		char opname[] = {sym, 0};
 		status(ErrorExpected1p, opname);

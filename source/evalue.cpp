@@ -16,8 +16,8 @@ using namespace c2;
 // Формула адресации
 // [reg + sym.offset + offset]
 
-static type		lvalue_type[2];
-evalue::plugin*	c2::backend;
+static type			lvalue_type[2];
+evalue::plugin*		c2::backend;
 
 evalue::evalue() : result(type::i32), sym(0), offset(0), reg(Const), next(0)
 {
