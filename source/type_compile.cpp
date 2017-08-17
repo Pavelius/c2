@@ -206,6 +206,8 @@ static void binary_operation(evalue& e2, char t1, char t2 = 0)
 			return;
 		}
 	}
+	if(e1.islvalue() && e2.islvalue())
+		e1.load();
 	if(gen.code)
 		backend->operation(e1, e2, t1, t2);
 }

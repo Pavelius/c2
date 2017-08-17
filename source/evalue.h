@@ -43,6 +43,7 @@ namespace c2
 		registers			getfree() const;
 		void				getrvalue();
 		void				load(registers r);
+		void				load() { load(getfree()); }
 		void				set(int value);
 		void				set(type* symbol);
 		void				set(const evalue& e);
