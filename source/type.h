@@ -22,6 +22,7 @@ namespace c2
 		ErrorAssigmentWithoutEnumeratorMember, ErrorExpectedEnumeratorMember,
 		ErrorSectionNumber,
 		ErrorWrongParamNumber,
+		ErrorFunctionMustReturnValue,
 		ErrorNotImplement1p2p,
 		ErrorNotFound1p2p,
 		ErrorCastType1pTo2p,

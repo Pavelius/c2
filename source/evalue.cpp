@@ -148,3 +148,19 @@ void evalue::xchange(evalue& e)
 	iswap(sym, e.sym);
 	iswap(result, e.result);
 }
+
+void evalue::cast(type* need_type)
+{
+	if(result == need_type)
+		return;
+	if(result->ispointer() && need_type->ispointer())
+	{
+		// Error;
+	}
+	else if(result->isnumber() && need_type->isnumber())
+	{
+		result = need_type;
+	}
+	if(result != need_type)
+		status(ErrorCastType1pTo2p, result->id, need_type->id);
+}

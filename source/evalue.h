@@ -27,15 +27,16 @@ namespace c2
 			virtual void	prologue(type* module, type* member) = 0;
 			virtual	int		label(int a) = 0;
 		};
-		type*			result;
-		registers		reg;
-		int				offset;
-		type*			sym;
-		evalue*			next;
+		type*				result;
+		registers			reg;
+		int					offset;
+		type*				sym;
+		evalue*				next;
 		//
 		evalue();
 		evalue(evalue* e);
 		//
+		void				cast(type* need_result);
 		void				clear();
 		void				dereference();
 		bool				isconst() const { return reg == Const; }

@@ -1361,17 +1361,19 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 	}
 	else if(match("return"))
 	{
-		//c2::evalue* e1 = top;
-		expression();
-		//if(ps.member->result == type::v0 && (top - e1))
-		//	status(ErrorVoidReturnValue);
-		//if(top)
-		//{
-			//gen::setresult();
-			//gen::pop();
-		//}
-		//gen::result(ps.member);
-		skip(';');
+		if(*ps.p == ';')
+		{
+			if(ps.member->result != type::v0)
+				status(ErrorFunctionMustReturnValue);
+		}
+		else
+		{
+			evalue e1;
+			expression(e1);
+			e1.cast(ps.member->result);
+			skip(';');
+		}
+		retproc(ps.member);
 	}
 	else if(match("if"))
 	{

@@ -3,6 +3,7 @@ mov eax, [3]
 mov [ebp+0], eax
 mov [ebp-4], 8
 neg [ebp-4]
+ret
 add 4, eax
 mov [ebp-8], 4
 mov eax, [ebp-8]
@@ -16,6 +17,7 @@ ENDP
 testmain PROC
 mov eax, [ebp+0]
 add eax, [ebp+4]
+ret
 ret
 ENDP
 
