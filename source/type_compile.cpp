@@ -563,6 +563,8 @@ static void instance(type* variable, bool allow_assigment)
 	}
 	else if(variable->is(Static))
 	{
+		// Статические перменные могут распологаться в секции инициализированных данных
+		// или не инициализированных. Вычисляем это по знаку равно.
 		if(gen.code)
 		{
 			if(was_initialized)
@@ -573,6 +575,8 @@ static void instance(type* variable, bool allow_assigment)
 	}
 	else if(variable->ismethodparam())
 	{
+		// Параметры функция расчитать довольно просто.
+		// Возьмем последний и добавим его размер.
 		for(auto p = variable->parent->child; p; p = p->next)
 		{
 			if(!p->ismethodparam())
@@ -586,15 +590,22 @@ static void instance(type* variable, bool allow_assigment)
 	}
 	else if(variable->islocal())
 	{
+		// Локальные параметры также расчитать довольно просто.
+		// Возьмем последний и вычтим его размер, так как локальные переменные растут вниз.
 		auto p = variable->getprevious();
 		if(p)
 			variable->value = p->value - ((p->size + 3) & 0xFFFFFFFC);
 	}
 	else
 	{
+		// На статические члены модуля имеют смещение относительно самого модуля.
+		// Возьмем последний и добавим его размер.
 		auto p = variable->getprevious();
 		if(p)
 			variable->value = p->value + p->size;
+		// Не статическая переменная не может быть инициализирована значением по-умолчанию
+		if(*ps.p == '=')
+			status(ErrorInvalid1p2pIn3p, "operator", "=", "after static variable");
 	}
 	if(*ps.p == '=')
 	{
@@ -609,9 +620,11 @@ static void instance(type* variable, bool allow_assigment)
 		}
 		initialize(variable);
 	}
+	// Вычислим размер текущего элемента
 	variable->size = variable->result->size*variable->count;
 	if(variable->parent->istype())
 	{
+		// Если это тип и не статический модуль добавим размер элемента.
 		if(!variable->ismethodparam() && !variable->islocal() && !variable->ismethod() && !variable->is(Static))
 			variable->parent->size = variable->value + variable->size;
 	}
