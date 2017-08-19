@@ -1,4 +1,6 @@
-﻿short x1, y1;
+﻿import geo.point;
+
+short x1, y1;
 short x2, y2;
 
 void set(int nx1, int ny1, int nx2, int ny2);

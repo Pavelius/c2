@@ -7,7 +7,7 @@ public static char t2[] = {2, 4, 0};
 
 int testmain(int a, int b)
 {
-	return 0;
+	return a + b;
 }
 
 int main()
@@ -16,7 +16,7 @@ int main()
 	int a = sizeof(rect);
 	if(!a)
 		return 0;
-	int b = sizeof(point);
+	int b = sizeof(point) + testmain(10, 2);
 	while(a>0)
 	{
 		b = b + a - 2;

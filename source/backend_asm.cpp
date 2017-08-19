@@ -80,6 +80,12 @@ struct backend_asm : public evalue::plugin
 		linefeed();
 	}
 
+	void retproc(type* member) override
+	{
+		print(Code, "ret");
+		linefeed();
+	}
+
 	void epilogue(type* module, type* member) override
 	{
 		print(Code, "ENDP");

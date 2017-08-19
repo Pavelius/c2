@@ -107,7 +107,10 @@ static void prologue(type* sym)
 	if(!ps.module || !sym)
 		return;
 	if(gen.code)
+	{
+		sym->value = segments[Code]->get();
 		backend->prologue(ps.module, sym);
+	}
 }
 
 static void epilogue(type* sym)
@@ -116,6 +119,14 @@ static void epilogue(type* sym)
 		return;
 	if(gen.code)
 		backend->epilogue(ps.module, sym);
+}
+
+static void retproc(type* sym)
+{
+	if(!sym)
+		return;
+	if(gen.code)
+		backend->retproc(sym);
 }
 
 static void unary_operation(evalue& e2, char t1)
@@ -435,7 +446,7 @@ static bool istype(c2::type** declared, unsigned& flags)
 			if(m_static)
 				flags |= 1 << Static;
 			if(m_public)
-				flags |= 1 << Private;
+				flags |= 1 << Public;
 			*declared = e;
 		}
 		break;
@@ -661,8 +672,8 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 					auto id = szdup(identifier());
 					result = m2->create(id, result, pflags);
 					result->setmethodparam();
-					result->count++;
 					instance(result, false);
+					m2->count++;
 				}
 				if(*ps.p == ')')
 				{
@@ -682,6 +693,7 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 				m2->content = ps.p;
 				prologue(m2);
 				statement(0, 0, 0, 0);
+				retproc(m2);
 				epilogue(m2);
 				m2->size = -maximum_stack_frame;
 				//gen::result(m2);
@@ -1657,6 +1669,7 @@ static void compile_member(type* member)
 			declare_status(StatusCompileMethod, ps.member);
 			prologue(ps.member);
 			statement(0, 0, 0, 0);
+			retproc(ps.member);
 			epilogue(ps.member);
 		}
 	}

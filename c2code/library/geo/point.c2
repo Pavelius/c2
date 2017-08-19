@@ -1,7 +1,6 @@
 import geo.rect;
 
-short x;
-short y;
+short x, y;
 
 bool in(rect* rc)
 {

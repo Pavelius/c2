@@ -32,7 +32,7 @@ namespace c2
 		FirstStatus = StatusStartParse, LastStatus = StatusDeclare,
 	};
 	enum typeflags : char {
-		Private, Static, Readed, Writed, NoInitialized, Function, Parameter,
+		Public, Static, Readed, Writed, NoInitialized, Function, Parameter,
 	};
 	struct type
 	{

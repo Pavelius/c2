@@ -163,7 +163,7 @@ type* type::findmembers(const char* id)
 			{
 				for(auto m = p->type->child; m; m = m->next)
 				{
-					if(m->is(Private))
+					if(!m->is(Public))
 						continue;
 					if(m->id == id)
 						return m;
