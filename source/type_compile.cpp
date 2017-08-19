@@ -1671,7 +1671,6 @@ bool type::compile(const char* id, const char* start)
 	// 1) Пройдемся по всем модулям, чтобы получить метаданные
 	gen.code = false;
 	gen.unique = true;
-	gen.size = true;
 	parse_module(p);
 	if(errors)
 		return false;
@@ -1679,7 +1678,6 @@ bool type::compile(const char* id, const char* start)
 	gen.code = true;
 	gen.unique = false;
 	gen.methods = true;
-	gen.size = false;
 	if(start)
 	{
 		auto main_symbol = p->findmembers(start);

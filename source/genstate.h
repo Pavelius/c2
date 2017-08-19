@@ -7,7 +7,7 @@ namespace c2
 		bool			code;
 		bool			unique;
 		bool			methods;
-		bool			size;
+		//bool			size;
 		genstate();
 		~genstate();
 	};

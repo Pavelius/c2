@@ -1,3 +1,4 @@
+import geo.point;
 import geo.rect;
 
 public static char* string = "Count is good";
@@ -15,7 +16,7 @@ int main()
 	int a = sizeof(rect);
 	if(!a)
 		return 0;
-	int b = 5;
+	int b = sizeof(point);
 	while(a>0)
 	{
 		b = b + a - 2;
