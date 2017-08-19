@@ -46,6 +46,16 @@ bool type::ismember() const
 	return this && !(parent == types || parent == types_platform || parent == types_ref);
 }
 
+bool type::ismethod() const
+{
+	return ismember() && is(Function);
+}
+
+bool type::ismethodparam() const
+{
+	return this && is(Parameter);
+}
+
 bool type::islocal() const
 {
 	return this && parent && parent->ismember();
@@ -267,6 +277,16 @@ type* type::dereference()
 	if(!this)
 		return 0;
 	return result;
+}
+
+void type::setmethod()
+{
+	set(Function);
+}
+
+void type::setmethodparam()
+{
+	set(Parameter);
 }
 
 void type::setconstant(int value)

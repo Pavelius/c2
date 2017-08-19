@@ -32,7 +32,7 @@ namespace c2
 		FirstStatus = StatusStartParse, LastStatus = StatusDeclare,
 	};
 	enum typeflags : char {
-		Private, Static, Readed, Writed, NoInitialized,
+		Private, Static, Readed, Writed, NoInitialized, Function, Parameter,
 	};
 	struct type
 	{
@@ -78,17 +78,18 @@ namespace c2
 		bool			isforward() const { return ismethod() && !content; }
 		bool			islocal() const;
 		bool			ismember() const;
-		bool			ismethod() const { return ismember() && size == 0; }
-		bool			ismethodparam() const { return ismember() && size == 0; }
+		bool			ismethod() const;
+		bool			ismethodparam() const;
 		bool			isnumber() const;
 		bool			isplatform() const;
 		bool			ispointer() const;
 		bool			istype() const;
 		static void		link(const char* id);
 		type*			reference();
-		void			set(typeflags value) { flags |= 1 << value; }
+		void			set(typeflags value) { flags |= (1 << value); }
 		void			setconstant(int value);
-		void			setmethod() { size = 0; }
+		void			setmethod();
+		void			setmethodparam();
 	};
 	void				status(messages m, ...);
 	extern void(*errorproc)(messages m, const type* module, const type* member, const char* parameters);

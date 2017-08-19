@@ -20,6 +20,7 @@ static parsestate			ps;
 static adat<type*>			locals;
 static aref<type*>			used_symbols;
 static int					errors;
+static int					maximum_stack_frame;
 static void					statement(int* ct, int* br, int* cs, int* ds, evalue* cse = 0);
 static void					logical_or(evalue& e1);
 static void					assigment(evalue& e1);
@@ -360,7 +361,7 @@ static type* expression_const_type()
 	gen.code = false;
 	evalue e1;
 	expression(e1);
-	if(!e1.isconst() || !e1.sym)
+	if(!e1.isconst())
 		status(ErrorNeedConstantExpression);
 	auto result = e1.sym;
 	if(!result || !result->istype())
@@ -544,20 +545,45 @@ static int get_stack_frame(type* variable)
 static void instance(type* variable, bool allow_assigment)
 {
 	bool was_initialized = (*ps.p == '=');
-	if(gen.code)
+	if(variable->ismethod())
 	{
-		if(variable->parent->ismethod())
-		{
-			auto previous = variable->getprevious();
-			variable->value = previous ? previous->value + previous->size : get_stack_frame(variable->parent);
-		}
-		else if(variable->is(Static))
+		status(ErrorExpected1p, "variable instance");
+		return;
+	}
+	else if(variable->is(Static))
+	{
+		if(gen.code)
 		{
 			if(was_initialized)
 				variable->value = segments[Data]->get();
 			else
 				variable->value = segments[DataUninitialized]->get();
 		}
+	}
+	else if(variable->ismethodparam())
+	{
+		for(auto p = variable->parent->child; p; p = p->next)
+		{
+			if(!p->ismethodparam())
+				break;
+			if(p->next == variable)
+			{
+				variable->value = p->value + (p->size + 3) & 0xFFFFFFFC;
+				break;
+			}
+		}
+	}
+	else if(variable->islocal())
+	{
+		auto p = variable->getprevious();
+		if(p)
+			variable->value = p->value - ((p->size + 3) & 0xFFFFFFFC);
+	}
+	else
+	{
+		auto p = variable->getprevious();
+		if(p)
+			variable->value = p->value + p->size;
 	}
 	if(*ps.p == '=')
 	{
@@ -572,35 +598,12 @@ static void instance(type* variable, bool allow_assigment)
 		}
 		initialize(variable);
 	}
-	else
-	{
-		//variable->set(NoInitialized);
-		//gen::addz(variable->size, Variable);
-	}
 	variable->size = variable->result->size*variable->count;
-	//// PARAM
-	//variable->value = proc::param;
-	//proc::param += (variable->size + 3) & 0xFFFFFFFC;
-	//// AUTO
-	//proc::local += (variable->size + 3) & 0xFFFFFFFC;
-	//variable->value = -proc::local;
-	//variable->size = variable->csize();
-	//if(analize_code && *p == '=')
-	//{
-	//	gen::push(variable);
-	//	next(p + 1);
-	//	assigment();
-	//	gen::oper('=');
-	//	gen::pop();
-	//}
-	//if(!disable::size)
-	//{
-	//	// Члены не статического модуля имеют смещение
-	//	// максимального размера своего родителя и изменяют его размер
-	//	// на свой размер.
-	//	variable->value = variable->parent->size;
-	//	variable->parent->size += variable->size;
-	//}
+	if(variable->parent->istype())
+	{
+		if(!variable->ismethodparam() && !variable->islocal() && !variable->ismethod() && !variable->is(Static))
+			variable->parent->size = variable->value + variable->size;
+	}
 }
 
 // Чтобы можно было в секции данных размещать ресурсы и подтягивать их под переменные.
@@ -657,8 +660,9 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 					result = parse_pointer(result);
 					auto id = szdup(identifier());
 					result = m2->create(id, result, pflags);
-					m2->count++;
-					//gen::instance(result, false);
+					result->setmethodparam();
+					result->count++;
+					instance(result, false);
 				}
 				if(*ps.p == ')')
 				{
@@ -674,10 +678,12 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 			}
 			else
 			{
+				maximum_stack_frame = 0;
 				m2->content = ps.p;
 				prologue(m2);
 				statement(0, 0, 0, 0);
 				epilogue(m2);
+				m2->size = -maximum_stack_frame;
 				//gen::result(m2);
 			}
 			return true;
@@ -699,9 +705,6 @@ static bool declaration(type* parent, unsigned flags, bool allow_functions = tru
 			}
 		}
 		instance(m2, allow_dynamic_isntance);
-		// Если это тип добавим размер
-		if(gen.size && parent->istype())
-			parent->size += m2->size;
 		if(*ps.p == ';')
 		{
 			next(ps.p + 1);
@@ -1313,16 +1316,20 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 		// Очистим локальный стэк переменных
 		for(int i = locals.count; i > count; i--)
 		{
+			int stack_frame = locals.data[i]->value - locals.data[i]->size;
+			if(maximum_stack_frame > stack_frame)
+				maximum_stack_frame = stack_frame;
 			// empty data can be from saved registers in stack
 			// just test this and skip this case
 			if(locals.data[i - 1])
 			{
 			}
 		}
-		//if(proc::localmax < proc::local)
-		//	proc::localmax = proc::local;
+		auto pe = locals.end();
+		for(auto p = locals.data + count; p < pe; p++)
+		{
+		}
 		locals.count = count;
-		//proc::local = local;
 	}
 	else if(match("break"))
 	{
@@ -1489,7 +1496,7 @@ static void statement(int* ct, int* br, int* cs, int* ds, evalue* cse)
 
 static void block_declaration()
 {
-	while(declaration(ps.module, 1 << Static, false, true));
+	while(declaration(ps.module, 0, false, true));
 }
 
 static void block_function()
